@@ -34,7 +34,7 @@ export default function Summary({ quote, number, busy, onPdf, whatsappHref, mail
 
       {quote.discount > 0 && (
         <div className="summary-sub">
-          <span>Remise ({quote.discountPercent} %)</span>
+          <span>Remise{quote.discountPercentAmount > 0 ? ` (${quote.discountPercent} %` + (quote.discountAmount > 0 ? " + FCFA)" : ")") : ""}</span>
           <span>{formatFCFA(-quote.discount)}</span>
         </div>
       )}

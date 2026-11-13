@@ -19,6 +19,8 @@ export default function QuoteEditor() {
   const [notes, setNotes] = useState({});          // { idLigne: "explication du prix" }
   const [customLines, setCustomLines] = useState([]); // lignes ajoutées à la main
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(0); // remise en FCFA (ex : 1 000 pour arrondir)
+  const [overrides, setOverrides] = useState({});         // jours / prix modifiés ligne par ligne
   const [client, setClient] = useState({ name: "", project: "" });
   const [number, setNumber] = useState("");
   const [busy, setBusy] = useState(false);
@@ -136,6 +138,8 @@ export default function QuoteEditor() {
         setNotes(d.notes || {});
         setCustomLines(d.customLines || []);
         setDiscountPercent(d.discountPercent || 0);
+        setDiscountAmount(d.discountAmount || 0);
+        setOverrides(d.overrides || {});
         setClient(d.client || { name: "", project: "" });
         setSpecs(d.specs || "");
         setQuoteRate(d.dailyRate ?? null);
@@ -169,7 +173,7 @@ export default function QuoteEditor() {
       status,
       total: quote.total,
       updated_at: new Date().toISOString(),
-      data: { selected: [...selected], notes, customLines, discountPercent, client, specs, dailyRate: rate },
+      data: { selected: [...selected], notes, customLines, discountPercent, discountAmount, overrides, client, specs, dailyRate: rate },
     };
     let error;
     if (quoteId) {
@@ -195,6 +199,16 @@ export default function QuoteEditor() {
   }
   const setNote = (id, text) => setNotes({ ...notes, [id]: text });
 
+  // Changer les jours recalcule le prix tout seul (on efface un éventuel prix saisi à la main).
+  const setDays = (id, days) => setOverrides({ ...overrides, [id]: { days: Math.max(0, days) } });
+  // Saisir un prix à la main le fige, jusqu'à ce qu'on clique sur "Rétablir".
+  const setPrice = (id, price) => setOverrides({ ...overrides, [id]: { ...(overrides[id] || {}), price: Math.max(0, price) } });
+  const resetLine = (id) => {
+    const next = { ...overrides };
+    delete next[id];
+    setOverrides(next);
+  };
+
   const addCustom = () => setCustomLines([...customLines, { id: "c" + Date.now(), label: "", price: 0 }]);
   const updateCustom = (id, patch) => setCustomLines(customLines.map((c) => (c.id === id ? { ...c, ...patch } : c)));
   const removeCustom = (id) => setCustomLines(customLines.filter((c) => c.id !== id));
@@ -204,6 +218,8 @@ export default function QuoteEditor() {
     setNotes({});
     setCustomLines([]);
     setDiscountPercent(0);
+    setDiscountAmount(0);
+    setOverrides({});
     setClient({ name: "", project: "" });
     setNumber(makeQuoteNumber());
     setQuoteId(null);
@@ -215,7 +231,12 @@ export default function QuoteEditor() {
     window.history.replaceState(null, "", "/devis/");
   }
 
-  const quote = buildQuote(CATEGORIES, selected, rate, { customLines, discountPercent, notes });
+  const quote = buildQuote(CATEGORIES, selected, rate, { customLines, discountPercent, discountAmount, notes, overrides });
+
+  // Arrondit le total vers le bas : 201 000 avec un pas de 5 000 -> remise de 1 000, total 200 000.
+  function roundTotal(step) {
+    setDiscountAmount((quote.subtotal - quote.discountPercentAmount) % step);
+  }
 
   const text = shareText({ dev, client, quote, number });
   const whatsappHref = whatsappUrl(text);
@@ -350,26 +371,71 @@ export default function QuoteEditor() {
         {CATEGORIES.map((cat) => (
           <section className="card" key={cat.id}>
             <h2>{cat.label}</h2>
-            {cat.items.map((item) => (
-              <div className="item-wrap" key={item.id}>
-                <label className="item">
-                  <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggle(item.id)} />
-                  <span className="item-label">
-                    {item.label}
-                    {item.type === "days" && <small> {item.days} j</small>}
-                  </span>
-                  <span className="item-price">{formatFCFA(itemPrice(item, rate))}</span>
-                </label>
-                {selected.has(item.id) && (
-                  <input
-                    className="note-input"
-                    placeholder="Note pour le client (optionnel)"
-                    value={notes[item.id] || ""}
-                    onChange={(e) => setNote(item.id, e.target.value)}
-                  />
-                )}
-              </div>
-            ))}
+            {cat.items.map((item) => {
+              const line = quote.lines.find((l) => l.id === item.id); // existe seulement si la case est cochée
+              const min = item.type === "days" ? Math.round(item.min * rate) : null;
+              const max = item.type === "days" ? Math.round(item.max * rate) : null;
+              const outOfRange = line && min !== null && (line.price < min || line.price > max);
+              return (
+                <div className="item-wrap" key={item.id}>
+                  <label className="item">
+                    <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggle(item.id)} />
+                    <span className="item-label">
+                      {item.label}
+                      {item.type === "days" && <small> {item.days} j</small>}
+                    </span>
+                    <span className="item-price">{formatFCFA(line ? line.price : itemPrice(item, rate))}</span>
+                  </label>
+                  {line && (
+                    <div className="tune">
+                      <div className="tune-fields">
+                        {item.type === "days" && (
+                          <div className="tune-field">
+                            <span>Jours</span>
+                            <div className="stepper">
+                              <button type="button" onClick={() => setDays(item.id, line.days - 0.5)} aria-label="Moins un demi-jour">−</button>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.5"
+                                value={line.days}
+                                onChange={(e) => setDays(item.id, Number(e.target.value) || 0)}
+                              />
+                              <button type="button" onClick={() => setDays(item.id, line.days + 0.5)} aria-label="Plus un demi-jour">+</button>
+                            </div>
+                          </div>
+                        )}
+                        <label className="tune-field">
+                          <span>Prix (FCFA)</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1000"
+                            value={line.price}
+                            onChange={(e) => setPrice(item.id, Number(e.target.value) || 0)}
+                          />
+                        </label>
+                      </div>
+                      <div className="tune-info">
+                        {min !== null && (
+                          <small className="range">Fourchette : {formatFCFA(min)} à {formatFCFA(max)}</small>
+                        )}
+                        {outOfRange && <small className="warn">hors fourchette</small>}
+                        {line.edited && (
+                          <button type="button" className="link-btn" onClick={() => resetLine(item.id)}>Rétablir</button>
+                        )}
+                      </div>
+                      <input
+                        className="note-input"
+                        placeholder="Note pour le client (optionnel)"
+                        value={notes[item.id] || ""}
+                        onChange={(e) => setNote(item.id, e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </section>
         ))}
 
@@ -410,18 +476,37 @@ export default function QuoteEditor() {
         </section>
 
         <section className="card">
-          <h2>Remise</h2>
-          <label className="field">
-            Remise commerciale (%)
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={discountPercent || ""}
-              placeholder="0"
-              onChange={(e) => setDiscountPercent(Number(e.target.value) || 0)}
-            />
-          </label>
+          <h2>Remise et arrondi</h2>
+          <div className="grid">
+            <label className="field">
+              Remise en pourcentage (%)
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={discountPercent || ""}
+                placeholder="0"
+                onChange={(e) => setDiscountPercent(Number(e.target.value) || 0)}
+              />
+            </label>
+            <label className="field">
+              Remise en FCFA
+              <input
+                type="number"
+                min="0"
+                step="500"
+                value={discountAmount || ""}
+                placeholder="0"
+                onChange={(e) => setDiscountAmount(Number(e.target.value) || 0)}
+              />
+            </label>
+          </div>
+          <div className="round-row">
+            <span className="muted">Arrondir le total vers le bas :</span>
+            <button type="button" className="btn btn-outline btn-small" onClick={() => roundTotal(1000)}>1 000</button>
+            <button type="button" className="btn btn-outline btn-small" onClick={() => roundTotal(5000)}>5 000</button>
+            <button type="button" className="btn btn-outline btn-small" onClick={() => roundTotal(10000)}>10 000</button>
+          </div>
         </section>
 
         <BrandingCard brand={brand} setBrand={setBrand} />

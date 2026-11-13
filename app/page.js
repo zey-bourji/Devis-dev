@@ -1,5 +1,6 @@
 import Link from "next/link";
 import MiniSim from "../components/MiniSim";
+import { SITE } from "../lib/site";
 
 const STEPS = [
   { n: "1", title: "Coche les fonctionnalités", text: "Front-end, back-end, hébergement, nom de domaine, maintenance : choisis ce que contient le projet." },
@@ -21,7 +22,7 @@ export default function Home() {
           <p className="eyebrow">Fait par une dev, pour les devs</p>
           <h1>Ton devis de développeur, prêt à envoyer en deux minutes.</h1>
           <p className="hero-sub">
-            Coche les fonctionnalités du projet. Devis Dev calcule le prix en FCFA et génère un PDF propre à ton nom.
+            Coche les fonctionnalités du projet. {SITE.name} calcule le prix en FCFA et génère un PDF propre à ton nom.
           </p>
           <div className="hero-actions">
             <Link href="/devis/" className="btn btn-light">Créer un devis</Link>

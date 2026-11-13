@@ -1,8 +1,9 @@
 import "./globals.css";
 import SiteHeader from "../components/SiteHeader";
+import { SITE } from "../lib/site";
 
 export const metadata = {
-  title: "Devis Dev - le générateur de devis des développeurs freelances",
+  title: `${SITE.name} - le générateur de devis des développeurs freelances`,
   description: "Coche les fonctionnalités, obtiens un prix en FCFA et un devis PDF à ton image, prêt à envoyer.",
 };
 

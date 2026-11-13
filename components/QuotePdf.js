@@ -1,5 +1,6 @@
 import { Document, Image, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { formatFCFA } from "../lib/pricing";
+import { SITE } from "../lib/site";
 
 // Le PDF se décrit comme une page web : des View (blocs) et des Text.
 // Les styles ressemblent à du CSS mais s'écrivent en objets JavaScript.
@@ -50,7 +51,7 @@ export default function QuotePdf({ dev, client, quote, number, dateText, validUn
   const deposit = Math.round((quote.total * brand.depositPercent) / 100);
 
   return (
-    <Document title={`Devis ${number}`} author={dev.name || "Devis Dev"}>
+    <Document title={`Devis ${number}`} author={dev.name || SITE.name}>
       <Page size="A4" style={s.page}>
         <View style={s.top}>
           <View style={s.identity}>
@@ -103,10 +104,18 @@ export default function QuotePdf({ dev, client, quote, number, dateText, validUn
                 <Text>Sous-total</Text>
                 <Text>{formatFCFA(quote.subtotal)}</Text>
               </View>
-              <View style={s.totalRow}>
-                <Text>Remise ({quote.discountPercent} %)</Text>
-                <Text>{formatFCFA(-quote.discount)}</Text>
-              </View>
+              {quote.discountPercentAmount > 0 ? (
+                <View style={s.totalRow}>
+                  <Text>Remise ({quote.discountPercent} %)</Text>
+                  <Text>{formatFCFA(-quote.discountPercentAmount)}</Text>
+                </View>
+              ) : null}
+              {quote.discountAmount > 0 ? (
+                <View style={s.totalRow}>
+                  <Text>Remise commerciale</Text>
+                  <Text>{formatFCFA(-quote.discountAmount)}</Text>
+                </View>
+              ) : null}
             </View>
           ) : null}
           <View style={[s.grand, { backgroundColor: color }]}>
