@@ -114,26 +114,14 @@ export default function BrandingCard({ brand, setBrand }) {
         </div>
       </div>
 
-      <div className="grid">
-        <label className="field">
-          Acompte à la commande (%)
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={brand.depositPercent}
-            onChange={(e) => setBrand({ ...brand, depositPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) })}
-          />
-        </label>
-        <label className="check-field">
-          <input
-            type="checkbox"
-            checked={brand.showSignature}
-            onChange={(e) => setBrand({ ...brand, showSignature: e.target.checked })}
-          />
-          Ajouter la case de signature du client
-        </label>
-      </div>
+      <label className="check-field">
+        <input
+          type="checkbox"
+          checked={brand.showSignature}
+          onChange={(e) => setBrand({ ...brand, showSignature: e.target.checked })}
+        />
+        Ajouter la case de signature du client
+      </label>
 
       <label className="field">
         Conditions affichées en bas du devis

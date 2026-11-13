@@ -7,6 +7,7 @@ import { addDays, formatDate, makeQuoteNumber } from "../lib/quote";
 import { useStoredState } from "../lib/useStoredState";
 import { DEFAULT_BRAND } from "../lib/brand";
 import { mailtoUrl, shareText, whatsappUrl } from "../lib/share";
+import { buildSchedule, DEFAULT_SCHEDULE, RHYTHMS, SCHEDULE_PRESETS } from "../lib/schedule";
 import { analyzeSpecs } from "../lib/analyze";
 import { supabase } from "../lib/supabase";
 import { useUser } from "../lib/useUser";
@@ -20,6 +21,7 @@ export default function QuoteEditor() {
   const [customLines, setCustomLines] = useState([]); // lignes ajoutées à la main
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0); // remise en FCFA (ex : 1 000 pour arrondir)
+  const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE); // comment le client paie (acompte, versements...)
   const [overrides, setOverrides] = useState({});         // jours / prix modifiés ligne par ligne
   const [client, setClient] = useState({ name: "", project: "" });
   const [number, setNumber] = useState("");
@@ -140,6 +142,7 @@ export default function QuoteEditor() {
         setDiscountPercent(d.discountPercent || 0);
         setDiscountAmount(d.discountAmount || 0);
         setOverrides(d.overrides || {});
+        setSchedule({ ...DEFAULT_SCHEDULE, ...(d.schedule || {}) });
         setClient(d.client || { name: "", project: "" });
         setSpecs(d.specs || "");
         setQuoteRate(d.dailyRate ?? null);
@@ -173,7 +176,7 @@ export default function QuoteEditor() {
       status,
       total: quote.total,
       updated_at: new Date().toISOString(),
-      data: { selected: [...selected], notes, customLines, discountPercent, discountAmount, overrides, client, specs, dailyRate: rate },
+      data: { selected: [...selected], notes, customLines, discountPercent, discountAmount, overrides, schedule, client, specs, dailyRate: rate },
     };
     let error;
     if (quoteId) {
@@ -220,6 +223,7 @@ export default function QuoteEditor() {
     setDiscountPercent(0);
     setDiscountAmount(0);
     setOverrides({});
+    setSchedule(DEFAULT_SCHEDULE);
     setClient({ name: "", project: "" });
     setNumber(makeQuoteNumber());
     setQuoteId(null);
@@ -237,6 +241,8 @@ export default function QuoteEditor() {
   function roundTotal(step) {
     setDiscountAmount((quote.subtotal - quote.discountPercentAmount) % step);
   }
+
+  const payments = buildSchedule(quote.total, schedule);
 
   const text = shareText({ dev, client, quote, number });
   const whatsappHref = whatsappUrl(text);
@@ -259,6 +265,7 @@ export default function QuoteEditor() {
           quote={quote}
           number={number}
           brand={brand}
+          payments={payments}
           dateText={formatDate(now)}
           validUntilText={formatDate(addDays(now, validity))}
         />
@@ -507,6 +514,58 @@ export default function QuoteEditor() {
             <button type="button" className="btn btn-outline btn-small" onClick={() => roundTotal(5000)}>5 000</button>
             <button type="button" className="btn btn-outline btn-small" onClick={() => roundTotal(10000)}>10 000</button>
           </div>
+        </section>
+
+        <section className="card">
+          <h2>Modalités de paiement</h2>
+          <div className="presets">
+            {SCHEDULE_PRESETS.map((p) => (
+              <button type="button" key={p.label} className="chip" onClick={() => setSchedule(p.value)}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <div className="grid">
+            <label className="field">
+              Acompte à la commande (%)
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={schedule.depositPercent}
+                onChange={(e) => setSchedule({ ...schedule, depositPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) })}
+              />
+            </label>
+            <label className="field">
+              Le reste se paie
+              <select value={schedule.rhythm} onChange={(e) => setSchedule({ ...schedule, rhythm: e.target.value })}>
+                {RHYTHMS.map((r) => (
+                  <option key={r.id} value={r.id}>{r.label}</option>
+                ))}
+              </select>
+            </label>
+            {schedule.rhythm !== "livraison" && (
+              <label className="field">
+                Nombre de versements
+                <input
+                  type="number"
+                  min="1"
+                  max="12"
+                  value={schedule.installments}
+                  onChange={(e) => setSchedule({ ...schedule, installments: Math.min(12, Math.max(1, Number(e.target.value) || 1)) })}
+                />
+              </label>
+            )}
+          </div>
+          <ul className="plan-preview">
+            {payments.map((p, i) => (
+              <li key={i}>
+                <span>{p.label}</span>
+                <b>{formatFCFA(p.amount)}</b>
+              </li>
+            ))}
+            {payments.length === 0 && <li className="muted">Coche des lignes pour voir l'échéancier.</li>}
+          </ul>
         </section>
 
         <BrandingCard brand={brand} setBrand={setBrand} />

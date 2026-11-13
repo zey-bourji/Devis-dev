@@ -28,6 +28,9 @@ const s = StyleSheet.create({
   totals: { marginTop: 12, alignSelf: "flex-end", width: 250 },
   totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 3 },
   grand: { flexDirection: "row", justifyContent: "space-between", padding: 8, marginTop: 4, fontFamily: "Helvetica-Bold", fontSize: 12 },
+  plan: { marginTop: 14 },
+  planTitle: { fontFamily: "Helvetica-Bold", fontSize: 10.5, marginBottom: 4 },
+  planRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: "#dfe2ee" },
   conditions: { marginTop: 18, color: "#44485a", lineHeight: 1.35 },
   signature: { marginTop: 12, borderWidth: 0.5, borderColor: "#b9bdd0", height: 60, padding: 8, width: 240, color: "#6b7085" },
   band: { marginHorizontal: -34, marginTop: -34, paddingHorizontal: 34, paddingTop: 26, paddingBottom: 22, marginBottom: 22 },
@@ -68,7 +71,7 @@ function look(template, color) {
   };
 }
 
-export default function QuotePdf({ dev, client, quote, number, dateText, validUntilText, brand }) {
+export default function QuotePdf({ dev, client, quote, number, dateText, validUntilText, brand, payments = [] }) {
   const template = brand.template || "classique";
   const color = brand.color;
   const v = look(template, color);
@@ -82,7 +85,6 @@ export default function QuotePdf({ dev, client, quote, number, dateText, validUn
     else groups.push({ category: line.category, lines: [line] });
   }
 
-  const deposit = Math.round((quote.total * brand.depositPercent) / 100);
 
   const identity = (
     <View style={s.identity}>
@@ -171,19 +173,19 @@ export default function QuotePdf({ dev, client, quote, number, dateText, validUn
             <Text>TOTAL</Text>
             <Text>{formatFCFA(quote.total)}</Text>
           </View>
-          {brand.depositPercent > 0 ? (
-            <View>
-              <View style={s.totalRow}>
-                <Text>Acompte à la commande ({brand.depositPercent} %)</Text>
-                <Text>{formatFCFA(deposit)}</Text>
+                </View>
+
+        {payments.length > 0 ? (
+          <View style={s.plan} wrap={false}>
+            <Text style={[s.planTitle, { color }]}>Modalités de paiement</Text>
+            {payments.map((p, i) => (
+              <View style={s.planRow} key={i}>
+                <Text>{p.label}</Text>
+                <Text style={s.bold}>{formatFCFA(p.amount)}</Text>
               </View>
-              <View style={s.totalRow}>
-                <Text>Solde à la livraison</Text>
-                <Text>{formatFCFA(quote.total - deposit)}</Text>
-              </View>
-            </View>
-          ) : null}
-        </View>
+            ))}
+          </View>
+        ) : null}
 
         <View wrap={false}>
           {brand.conditions ? <Text style={s.conditions}>{brand.conditions}</Text> : null}
