@@ -21,9 +21,11 @@ body {
 }
 .card h2 { margin: 0 0 8px; font-size: 16px; color: #3b3f8f; }
 
-.rate { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
-.rate input {
-  font-size: 18px; padding: 10px 12px; border: 1px solid #d3d6e0; border-radius: 10px;
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+.field { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px; }
+.field input {
+  font-size: 16px; padding: 10px 12px; border: 1px solid #d3d6e0; border-radius: 10px; font-weight: 400;
 }
 
 .item {
@@ -43,5 +45,10 @@ body {
 .total-bar > div {
   max-width: 720px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;
 }
-.total-bar small { opacity: 0.8; }
+.total-bar small { opacity: 0.8; display: block; }
 .total-bar strong { font-size: 22px; }
+.total-bar button {
+  background: #fff; color: #3b3f8f; border: none; border-radius: 10px; padding: 12px 16px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.total-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
