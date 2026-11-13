@@ -2,9 +2,32 @@
 
 import { useState } from "react";
 import { COLOR_PRESETS } from "../lib/brand";
-import { fileToLogo } from "../lib/image";
+import { dominantColor, fileToLogo } from "../lib/image";
 
-// Le panneau "Personnaliser le devis" : logo, couleur, acompte, conditions, signature.
+const TEMPLATES = [
+  { id: "classique", label: "Classique" },
+  { id: "moderne", label: "Moderne" },
+  { id: "minimal", label: "Minimal" },
+];
+
+// Une petite vignette dessinée en SVG pour chaque modèle (elle prend la couleur choisie).
+function TemplateThumb({ id, color }) {
+  return (
+    <svg viewBox="0 0 60 80" width="60" height="80" aria-hidden="true">
+      <rect x="0.5" y="0.5" width="59" height="79" rx="3" fill="#fff" stroke="#d3d6e0" />
+      {id === "moderne" && <rect x="0.5" y="0.5" width="59" height="20" rx="3" fill={color} />}
+      {id === "classique" && <rect x="6" y="8" width="22" height="5" rx="1" fill={color} />}
+      {id === "minimal" && <><rect x="6" y="8" width="20" height="4" rx="1" fill="#1c1f2a" /><rect x="6" y="17" width="48" height="1.5" fill={color} /></>}
+      <rect x="6" y="28" width="48" height={id === "minimal" ? 2 : 6} rx="1" fill={id === "classique" ? color : id === "moderne" ? "#eef0f7" : "#1c1f2a"} />
+      <rect x="6" y="40" width="48" height="2" fill="#dfe2ee" />
+      <rect x="6" y="48" width="48" height="2" fill="#dfe2ee" />
+      <rect x="6" y="56" width="48" height="2" fill="#dfe2ee" />
+      <rect x="30" y="64" width="24" height="7" rx={id === "moderne" ? 3 : 1} fill={id === "minimal" ? "none" : color} stroke={id === "minimal" ? color : "none"} />
+    </svg>
+  );
+}
+
+// Le panneau "Personnaliser le devis" : modèle, logo, couleur, acompte, conditions, signature.
 export default function BrandingCard({ brand, setBrand }) {
   const [error, setError] = useState("");
 
@@ -20,9 +43,33 @@ export default function BrandingCard({ brand, setBrand }) {
     e.target.value = ""; // permet de re-choisir le même fichier
   }
 
+  // Propose la couleur principale du logo comme couleur du devis.
+  async function colorFromLogo() {
+    const color = await dominantColor(brand.logo);
+    if (color) setBrand({ ...brand, color });
+    else setError("Ce logo n'a pas de couleur nette à reprendre (il est noir, blanc ou gris).");
+  }
+
   return (
     <section className="card">
       <h2>Personnaliser le devis</h2>
+
+      <div className="field">
+        Modèle
+        <div className="templates">
+          {TEMPLATES.map((t) => (
+            <button
+              type="button"
+              key={t.id}
+              className={"template" + ((brand.template || "classique") === t.id ? " active" : "")}
+              onClick={() => setBrand({ ...brand, template: t.id })}
+            >
+              <TemplateThumb id={t.id} color={brand.color} />
+              <span>{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="brand-row">
         <div className="logo-preview">
@@ -34,9 +81,12 @@ export default function BrandingCard({ brand, setBrand }) {
             <input type="file" accept="image/*" onChange={onLogo} hidden />
           </label>
           {brand.logo && (
-            <button type="button" className="link-btn" onClick={() => setBrand({ ...brand, logo: null })}>
-              Retirer
-            </button>
+            <>
+              <button type="button" className="link-btn" onClick={colorFromLogo}>Utiliser la couleur de mon logo</button>
+              <button type="button" className="link-btn" onClick={() => setBrand({ ...brand, logo: null })}>
+                Retirer le logo
+              </button>
+            </>
           )}
         </div>
       </div>
