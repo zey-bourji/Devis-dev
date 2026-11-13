@@ -172,3 +172,42 @@ textarea { resize: vertical; }
 .cta { text-align: center; padding: 56px 16px; }
 .cta h2 { font-size: 24px; margin: 0 0 16px; }
 .site-footer { text-align: center; color: var(--muted); font-size: 13px; padding: 20px 16px 30px; border-top: 1px solid var(--line); }
+
+/* ---------- Comptes, projets ---------- */
+.nav { display: flex; align-items: center; gap: 14px; }
+.nav-link { font-weight: 600; font-size: 15px; color: var(--brand); }
+.narrow { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+.center { text-align: center; }
+.center-card { text-align: center; padding: 32px 18px; }
+.auth { max-width: 420px; margin: 24px auto; }
+.auth h1 { margin: 0 0 4px; font-size: 24px; }
+.auth-switch { text-align: center; margin: 14px 0 0; color: var(--muted); font-size: 14px; }
+.info { color: #0f766e; font-size: 14px; margin: 8px 0; }
+.link { color: var(--brand); text-decoration: underline; font-weight: 600; }
+.back { display: inline-block; color: var(--muted); font-size: 14px; margin-bottom: 4px; }
+.danger { color: #b42318; }
+.actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 4px 0 18px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.row-between h2 { margin: 0; }
+
+.project-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.project-card strong { display: block; }
+.project-card .muted { margin: 2px 0 0; display: block; }
+.badge { background: #eef0fb; color: var(--brand); border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.status-brouillon { background: #eef0f5; color: #5b6070; }
+.status-envoyé { background: #fff4d6; color: #92580a; }
+.status-accepté { background: #dcf5e7; color: #14653a; }
+.status-refusé { background: #fde2e2; color: #a12020; }
+
+.quote-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-top: 1px solid #eef0f5; }
+.quote-row-right { display: flex; align-items: center; gap: 10px; }
+
+select {
+  font: inherit; font-size: 16px; font-weight: 400; padding: 10px 12px; border: 1px solid #d3d6e0;
+  border-radius: 10px; background: #fff; color: var(--ink); width: 100%;
+}
+.save-box { border-top: 1px solid var(--line); padding-top: 12px; margin: 0 0 12px; }
+.save-box .field { margin-bottom: 8px; }
+.found { margin: 12px 0 0; padding-left: 18px; font-size: 14px; }
+.found small { color: var(--muted); }
+.editor-main textarea + .btn { margin-top: 10px; }

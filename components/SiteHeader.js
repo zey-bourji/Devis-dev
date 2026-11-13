@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HeaderNav from "./HeaderNav";
 
 // La barre du haut, la même sur toutes les pages.
 export default function SiteHeader() {
@@ -8,9 +9,7 @@ export default function SiteHeader() {
         <Link href="/" className="logo">
           <span className="logo-mark">D</span> Devis Dev
         </Link>
-        <nav>
-          <Link href="/devis/" className="btn btn-small">Créer un devis</Link>
-        </nav>
+        <HeaderNav />
       </div>
     </header>
   );

@@ -7,6 +7,9 @@ import { addDays, formatDate, makeQuoteNumber } from "../lib/quote";
 import { useStoredState } from "../lib/useStoredState";
 import { DEFAULT_BRAND } from "../lib/brand";
 import { mailtoUrl, shareText, whatsappUrl } from "../lib/share";
+import { analyzeSpecs } from "../lib/analyze";
+import { supabase } from "../lib/supabase";
+import { useUser } from "../lib/useUser";
 import BrandingCard from "./BrandingCard";
 import Summary from "./Summary";
 
@@ -20,6 +23,20 @@ export default function QuoteEditor() {
   const [number, setNumber] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // --- Compte, projet et devis enregistré ---
+  const { user, ready } = useUser();
+  const [params, setParams] = useState(null);        // ce qu'il y a dans l'adresse : ?project=... ou ?quote=...
+  const [projects, setProjects] = useState([]);      // les projets de la personne connectée
+  const [projectId, setProjectId] = useState("");
+  const [quoteId, setQuoteId] = useState(null);      // null tant que le devis n'est pas enregistré
+  const [status, setStatus] = useState("brouillon");
+  const [quoteRate, setQuoteRate] = useState(null);  // taux propre à un devis enregistré
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [specs, setSpecs] = useState("");            // le cahier des charges
+  const [suggestions, setSuggestions] = useState(null); // résultat de l'analyse (null = pas encore lancée)
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
   // --- Ce qui est sauvegardé dans le navigateur du dev ---
   const [dailyRate, setDailyRate] = useStoredState("dailyRate", DEFAULT_DAILY_RATE);
   const [dev, setDev] = useStoredState("dev", { name: "", email: "", phone: "" });
@@ -27,9 +44,148 @@ export default function QuoteEditor() {
   const [storedBrand, setBrand] = useStoredState("brand", DEFAULT_BRAND);
   const brand = { ...DEFAULT_BRAND, ...storedBrand };
 
+  // Un devis enregistré garde son propre taux : changer ton taux habituel ne modifie pas un ancien devis.
+  const rate = quoteRate ?? dailyRate;
+  const changeRate = (value) => (quoteRate === null ? setDailyRate(value) : setQuoteRate(value));
+
   // Le numéro est tiré au sort côté navigateur seulement (sinon le serveur et le navigateur
   // afficheraient deux numéros différents et React se plaindrait).
   useEffect(() => setNumber(makeQuoteNumber()), []);
+
+  // Lit l'adresse une seule fois : /devis/?project=ID ou /devis/?quote=ID
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    setParams({ project: q.get("project"), quote: q.get("quote") });
+  }, []);
+
+  // Connecté : récupère les réglages du profil (nom, logo, couleur, taux...) pour les retrouver sur tout appareil.
+  useEffect(() => {
+    if (!ready) return;
+    if (!user) {
+      setProfileLoaded(false);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("settings")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const saved = data?.settings;
+        if (saved) {
+          if (saved.dev) setDev(saved.dev);
+          if (saved.brand) setBrand(saved.brand);
+          if (saved.dailyRate) setDailyRate(saved.dailyRate);
+          if (saved.validity) setValidity(saved.validity);
+        }
+        setProfileLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, user?.id]);
+
+  // ...puis les enregistre quand tu les modifies (avec une petite pause pour ne pas écrire à chaque lettre).
+  useEffect(() => {
+    if (!user || !profileLoaded) return;
+    const timer = setTimeout(() => {
+      supabase.from("profiles").upsert({
+        user_id: user.id,
+        settings: { dev, brand: storedBrand, dailyRate, validity },
+        updated_at: new Date().toISOString(),
+      });
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [user?.id, profileLoaded, dev, storedBrand, dailyRate, validity]);
+
+  // Connecté : charge la liste de ses projets pour le menu "Projet".
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("projects")
+      .select("id, name, client_name, specs")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setProjects(data || []));
+  }, [user?.id]);
+
+  // Si l'adresse contient ?project=ID : on pré-remplit le client, le nom du projet et le cahier des charges.
+  useEffect(() => {
+    if (!params?.project || params.quote || projects.length === 0 || projectId) return;
+    const project = projects.find((p) => p.id === params.project);
+    if (project) pickProject(project.id, true);
+  }, [params, projects]);
+
+  // Si l'adresse contient ?quote=ID : on recharge le devis enregistré.
+  useEffect(() => {
+    if (!params?.quote || !user) return;
+    supabase
+      .from("quotes")
+      .select("*")
+      .eq("id", params.quote)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error || !data) return setNotice("Devis introuvable.");
+        const d = data.data || {};
+        setQuoteId(data.id);
+        setNumber(data.number);
+        setStatus(data.status);
+        setProjectId(data.project_id || "");
+        setSelected(new Set(d.selected || []));
+        setNotes(d.notes || {});
+        setCustomLines(d.customLines || []);
+        setDiscountPercent(d.discountPercent || 0);
+        setClient(d.client || { name: "", project: "" });
+        setSpecs(d.specs || "");
+        setQuoteRate(d.dailyRate ?? null);
+      });
+  }, [params?.quote, user?.id]);
+
+  // Choisir un projet dans le menu : on reprend ses informations.
+  function pickProject(id, force = false) {
+    setProjectId(id);
+    const project = projects.find((p) => p.id === id);
+    if (!project) return;
+    if (force || !client.name) setClient({ name: project.client_name || client.name, project: project.name });
+    if (force || !specs) setSpecs(project.specs || "");
+  }
+
+  // Lit le cahier des charges et pré-coche les fonctionnalités trouvées.
+  function runAnalysis() {
+    const found = analyzeSpecs(specs);
+    setSuggestions(found);
+    if (found.length > 0) setSelected(new Set([...selected, ...found.map((f) => f.id)]));
+  }
+
+  // Enregistre (ou met à jour) le devis dans le compte.
+  async function saveQuote() {
+    if (!user) return;
+    setSaving(true);
+    setNotice("");
+    const payload = {
+      project_id: projectId || null,
+      number,
+      status,
+      total: quote.total,
+      updated_at: new Date().toISOString(),
+      data: { selected: [...selected], notes, customLines, discountPercent, client, specs, dailyRate: rate },
+    };
+    let error;
+    if (quoteId) {
+      ({ error } = await supabase.from("quotes").update(payload).eq("id", quoteId));
+    } else {
+      const res = await supabase.from("quotes").insert(payload).select("id").single();
+      error = res.error;
+      if (!error) {
+        setQuoteId(res.data.id);
+        // L'adresse devient /devis/?quote=ID : un rechargement de la page retrouve le même devis.
+        window.history.replaceState(null, "", `/devis/?quote=${res.data.id}`);
+      }
+    }
+    setSaving(false);
+    setNotice(error ? "Échec de l'enregistrement : " + error.message : "Devis enregistré ✓");
+  }
 
   function toggle(id) {
     const next = new Set(selected);
@@ -50,9 +206,16 @@ export default function QuoteEditor() {
     setDiscountPercent(0);
     setClient({ name: "", project: "" });
     setNumber(makeQuoteNumber());
+    setQuoteId(null);
+    setQuoteRate(null);
+    setStatus("brouillon");
+    setSpecs("");
+    setSuggestions(null);
+    setNotice("");
+    window.history.replaceState(null, "", "/devis/");
   }
 
-  const quote = buildQuote(CATEGORIES, selected, dailyRate, { customLines, discountPercent, notes });
+  const quote = buildQuote(CATEGORIES, selected, rate, { customLines, discountPercent, notes });
 
   const text = shareText({ dev, client, quote, number });
   const whatsappHref = whatsappUrl(text);
@@ -117,11 +280,48 @@ export default function QuoteEditor() {
                 type="number"
                 min="0"
                 step="1000"
-                value={dailyRate}
-                onChange={(e) => setDailyRate(Number(e.target.value) || 0)}
+                value={rate}
+                onChange={(e) => changeRate(Number(e.target.value) || 0)}
               />
             </label>
           </div>
+        </section>
+
+        {user && (
+          <section className="card">
+            <h2>Projet</h2>
+            <label className="field">
+              Rattacher ce devis à un projet
+              <select value={projectId} onChange={(e) => pickProject(e.target.value)}>
+                <option value="">Aucun projet</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </label>
+          </section>
+        )}
+
+        <section className="card">
+          <h2>Cahier des charges (facultatif)</h2>
+          <p className="muted">Colle le cahier des charges : je repère les fonctionnalités et je les pré-coche. Ce sont des suggestions, à toi de vérifier.</p>
+          <textarea rows="5" value={specs} onChange={(e) => setSpecs(e.target.value)} placeholder="Ex : un site avec inscription des utilisateurs, paiement par Wave, un espace admin..." />
+          <button type="button" className="btn btn-outline btn-small" onClick={runAnalysis} disabled={!specs.trim()}>
+            Analyser et pré-cocher
+          </button>
+          {suggestions && suggestions.length === 0 && (
+            <p className="muted">Aucune fonctionnalité reconnue. Précise le texte ou coche à la main.</p>
+          )}
+          {suggestions && suggestions.length > 0 && (
+            <ul className="found">
+              {suggestions.map((f) => (
+                <li key={f.id}>
+                  <b>{CATEGORIES.flatMap((c) => c.items).find((i) => i.id === f.id)?.label}</b>
+                  <small> · mot repéré : « {f.word} »</small>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <section className="card">
@@ -158,7 +358,7 @@ export default function QuoteEditor() {
                     {item.label}
                     {item.type === "days" && <small> {item.days} j</small>}
                   </span>
-                  <span className="item-price">{formatFCFA(itemPrice(item, dailyRate))}</span>
+                  <span className="item-price">{formatFCFA(itemPrice(item, rate))}</span>
                 </label>
                 {selected.has(item.id) && (
                   <input
@@ -236,6 +436,7 @@ export default function QuoteEditor() {
           whatsappHref={whatsappHref}
           mailHref={mailHref}
           onReset={reset}
+          account={{ user, ready, status, setStatus, saving, notice, onSave: saveQuote, saved: !!quoteId }}
         />
       </div>
 
