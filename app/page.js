@@ -1,148 +1,72 @@
-"use client";
+import Link from "next/link";
+import MiniSim from "../components/MiniSim";
 
-import { useState } from "react";
-import { CATEGORIES, DEFAULT_DAILY_RATE } from "../lib/features";
-import { buildQuote, formatFCFA, itemPrice } from "../lib/pricing";
-import { addDays, formatDate, makeQuoteNumber } from "../lib/quote";
-import { useStoredState } from "../lib/useStoredState";
+const STEPS = [
+  { n: "1", title: "Coche les fonctionnalités", text: "Front-end, back-end, hébergement, nom de domaine, maintenance : choisis ce que contient le projet." },
+  { n: "2", title: "Le prix se calcule seul", text: "Tu fixes ton taux journalier une fois. Le total en FCFA se met à jour à chaque clic." },
+  { n: "3", title: "Envoie un devis propre", text: "Télécharge le PDF avec ton logo et tes couleurs, puis envoie-le par WhatsApp ou par email." },
+];
+
+const FEATURES = [
+  { title: "Pensé en FCFA", text: "Des prix à la réalité d'ici : Mobile Money, hébergement, domaine, acompte à la commande." },
+  { title: "Un devis à ton image", text: "Ton logo, ta couleur, tes conditions, une note pour justifier chaque prix." },
+  { title: "Zéro prise de tête", text: "Pas de tableur, pas de Word à mettre en page. Un devis en moins de deux minutes." },
+];
 
 export default function Home() {
-  // Ce que le dev a coché (pas sauvegardé : chaque devis repart de zéro).
-  const [selected, setSelected] = useState(new Set());
-  // Ces trois-là sont sauvegardés dans le navigateur pour ne pas les retaper.
-  const [dailyRate, setDailyRate] = useStoredState("dailyRate", DEFAULT_DAILY_RATE);
-  const [dev, setDev] = useStoredState("dev", { name: "", email: "", phone: "" });
-  const [validity, setValidity] = useStoredState("validity", 30);
-  // Le client change à chaque devis : pas de sauvegarde.
-  const [client, setClient] = useState({ name: "", project: "" });
-  const [busy, setBusy] = useState(false);
-
-  function toggle(id) {
-    const next = new Set(selected);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelected(next);
-  }
-
-  const quote = buildQuote(CATEGORIES, selected, dailyRate);
-
-  // Génère le PDF dans le navigateur et le télécharge.
-  async function downloadPdf() {
-    setBusy(true);
-    try {
-      // Import à la demande : la bibliothèque PDF est lourde, on ne la charge qu'au clic.
-      const [{ pdf }, { default: QuotePdf }] = await Promise.all([
-        import("@react-pdf/renderer"),
-        import("../components/QuotePdf"),
-      ]);
-      const now = new Date();
-      const number = makeQuoteNumber(now);
-      const blob = await pdf(
-        <QuotePdf
-          dev={dev}
-          client={client}
-          quote={quote}
-          number={number}
-          dateText={formatDate(now)}
-          validUntilText={formatDate(addDays(now, validity))}
-        />
-      ).toBlob();
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${number}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
-    <main className="page">
-      <header className="header">
-        <h1>Devis Dev</h1>
-        <p>Coche les fonctionnalités du projet, le prix se calcule tout seul.</p>
-      </header>
-
-      <section className="card">
-        <h2>Toi</h2>
-        <div className="grid">
-          <label className="field">
-            Ton nom ou ta marque
-            <input value={dev.name} onChange={(e) => setDev({ ...dev, name: e.target.value })} />
-          </label>
-          <label className="field">
-            Email
-            <input type="email" value={dev.email} onChange={(e) => setDev({ ...dev, email: e.target.value })} />
-          </label>
-          <label className="field">
-            Téléphone
-            <input value={dev.phone} onChange={(e) => setDev({ ...dev, phone: e.target.value })} />
-          </label>
-          <label className="field">
-            Taux journalier (FCFA)
-            <input
-              type="number"
-              min="0"
-              step="1000"
-              value={dailyRate}
-              onChange={(e) => setDailyRate(Number(e.target.value) || 0)}
-            />
-          </label>
-        </div>
-      </section>
-
-      <section className="card">
-        <h2>Le client</h2>
-        <div className="grid">
-          <label className="field">
-            Nom du client
-            <input value={client.name} onChange={(e) => setClient({ ...client, name: e.target.value })} />
-          </label>
-          <label className="field">
-            Nom du projet
-            <input value={client.project} onChange={(e) => setClient({ ...client, project: e.target.value })} />
-          </label>
-          <label className="field">
-            Validité du devis (jours)
-            <input
-              type="number"
-              min="1"
-              value={validity}
-              onChange={(e) => setValidity(Number(e.target.value) || 1)}
-            />
-          </label>
-        </div>
-      </section>
-
-      {CATEGORIES.map((cat) => (
-        <section className="card" key={cat.id}>
-          <h2>{cat.label}</h2>
-          {cat.items.map((item) => (
-            <label className="item" key={item.id}>
-              <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggle(item.id)} />
-              <span className="item-label">
-                {item.label}
-                {item.type === "days" && <small> {item.days} j</small>}
-              </span>
-              <span className="item-price">{formatFCFA(itemPrice(item, dailyRate))}</span>
-            </label>
-          ))}
-        </section>
-      ))}
-
-      <footer className="total-bar">
-        <div>
-          <div className="total-text">
-            <small>{quote.lines.length} fonctionnalité(s)</small>
-            <strong>{formatFCFA(quote.total)}</strong>
+    <main>
+      <section className="hero">
+        <div className="hero-inner">
+          <p className="eyebrow">Fait par une dev, pour les devs</p>
+          <h1>Ton devis de développeur, prêt à envoyer en deux minutes.</h1>
+          <p className="hero-sub">
+            Coche les fonctionnalités du projet. Devis Dev calcule le prix en FCFA et génère un PDF propre à ton nom.
+          </p>
+          <div className="hero-actions">
+            <Link href="/devis/" className="btn btn-light">Créer un devis</Link>
+            <a href="#essai" className="btn btn-ghost">Essayer ici</a>
           </div>
-          <button onClick={downloadPdf} disabled={quote.lines.length === 0 || busy}>
-            {busy ? "Création..." : "Télécharger le devis PDF"}
-          </button>
         </div>
+      </section>
+
+      <section className="section" id="essai">
+        <h2 className="section-title">Essaie, sans compte</h2>
+        <p className="section-sub">Coche, décoche, regarde le prix bouger.</p>
+        <MiniSim />
+      </section>
+
+      <section className="section">
+        <h2 className="section-title">Comment ça marche</h2>
+        <div className="steps">
+          {STEPS.map((s) => (
+            <div className="step card" key={s.n}>
+              <span className="step-n">{s.n}</span>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="steps">
+          {FEATURES.map((f) => (
+            <div className="card" key={f.title}>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="cta">
+        <h2>Prêt à envoyer ton prochain devis ?</h2>
+        <Link href="/devis/" className="btn btn-light">Créer un devis</Link>
+      </section>
+
+      <footer className="site-footer">
+        Projet réalisé pour la Coupe d'Afrique des Développeurs 2026 · Systalink Challenge
       </footer>
     </main>
   );
