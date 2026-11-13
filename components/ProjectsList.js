@@ -11,6 +11,7 @@ export default function ProjectsList() {
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", client_name: "", description: "" });
   const [creating, setCreating] = useState(false);
+  const [showForm, setShowForm] = useState(false); // le formulaire s'ouvre seulement au clic
 
   // Charge les projets de la personne connectée (les règles RLS ne renvoient que les siens).
   useEffect(() => {
@@ -48,37 +49,58 @@ export default function ProjectsList() {
     );
   }
 
+  const list = projects || [];
+
   return (
     <>
-      <h1 className="page-title">Mes projets</h1>
+      <div className="page-head">
+        <h1 className="page-title">Mes projets</h1>
+        <button type="button" className="btn" onClick={() => setShowForm((v) => !v)}>
+          {showForm ? "Fermer" : "+ Créer un projet"}
+        </button>
+      </div>
       {error && <p className="error">{error}</p>}
 
-      <section className="card">
-        <h2>Nouveau projet</h2>
-        <form onSubmit={createProject}>
-          <div className="grid">
+      {showForm && (
+        <section className="card new-project">
+          <h2>Nouveau projet</h2>
+          <form onSubmit={createProject}>
+            <div className="grid">
+              <label className="field">
+                Nom du projet
+                <input autoFocus required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              </label>
+              <label className="field">
+                Client
+                <input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
+              </label>
+            </div>
             <label className="field">
-              Nom du projet
-              <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              Description (optionnel)
+              <textarea rows="2" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </label>
-            <label className="field">
-              Client
-              <input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
-            </label>
-          </div>
-          <label className="field">
-            Description (optionnel)
-            <textarea rows="2" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          </label>
-          <button className="btn" disabled={creating || !form.name.trim()}>
-            {creating ? "Création..." : "Créer le projet"}
-          </button>
-        </form>
-      </section>
+            <div className="form-actions">
+              <button className="btn" disabled={creating || !form.name.trim()}>
+                {creating ? "Création..." : "Créer le projet"}
+              </button>
+              <button type="button" className="btn btn-light" onClick={() => setShowForm(false)}>Annuler</button>
+            </div>
+          </form>
+        </section>
+      )}
 
       {projects === null && !error && <p className="muted">Chargement de tes projets...</p>}
-      {projects && projects.length === 0 && <p className="muted">Aucun projet pour l'instant. Crée le premier ci-dessus.</p>}
-      {projects && projects.map((p) => (
+
+      {projects && list.length === 0 && !showForm && (
+        <div className="card center-card empty-state">
+          <div className="empty-icon" aria-hidden="true">📁</div>
+          <h2>Aucun projet pour le moment</h2>
+          <p className="muted">Crée ton premier projet pour y ranger tes devis, le cahier des charges et les infos de ton client.</p>
+          <button type="button" className="btn" onClick={() => setShowForm(true)}>Créer mon premier projet</button>
+        </div>
+      )}
+
+      {list.map((p) => (
         <Link href={`/projet/?id=${p.id}`} className="card project-card" key={p.id}>
           <div>
             <strong>{p.name}</strong>
