@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -19,6 +20,7 @@ export default function AuthForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
@@ -85,6 +87,16 @@ export default function AuthForm() {
             autoComplete={mode === "login" ? "current-password" : "new-password"}
           />
         </label>
+
+        {mode === "signup" && (
+          <label className="check-field">
+            <input type="checkbox" required checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
+            <span>
+              J'ai lu et j'accepte la <Link href="/confidentialite/">politique de confidentialité</Link> et les{" "}
+              <Link href="/conditions/">conditions d'utilisation</Link>.
+            </span>
+          </label>
+        )}
 
         {error && <p className="error">{error}</p>}
         {info && <p className="info">{info}</p>}

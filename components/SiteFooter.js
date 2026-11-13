@@ -16,6 +16,8 @@ export default function SiteFooter() {
           <Link href="/devis/">Créer un devis</Link>
           <Link href="/projets/">Mes projets</Link>
           <Link href="/connexion/">Connexion</Link>
+          <Link href="/confidentialite/">Confidentialité</Link>
+          <Link href="/conditions/">Conditions d'utilisation</Link>
         </div>
       </div>
       <p className="footer-note">
