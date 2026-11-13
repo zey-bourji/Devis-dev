@@ -1,5 +1,7 @@
 import Link from "next/link";
+import HeroDemo from "../components/HeroDemo";
 import MiniSim from "../components/MiniSim";
+import Reveal from "../components/Reveal";
 import { SITE } from "../lib/site";
 
 const STEPS = [
@@ -8,67 +10,90 @@ const STEPS = [
   { n: "3", title: "Envoie un devis propre", text: "Télécharge le PDF avec ton logo et tes couleurs, puis envoie-le par WhatsApp ou par email." },
 ];
 
+// Petites icônes dessinées en SVG, pour que les cartes soient moins sèches.
+const ICONS = {
+  coin: <path d="M12 3a9 9 0 100 18 9 9 0 000-18zm0 4v10m-3-7.5c0-1 1.3-1.5 3-1.5s3 .5 3 1.5-1.3 1.5-3 1.5-3 .5-3 1.5 1.3 1.5 3 1.5 3-.5 3-1.5" />,
+  palette: <path d="M12 3a9 9 0 100 18c1.4 0 2-1 1.5-2.2-.5-1.2.2-2.3 1.5-2.3H17a4 4 0 004-4c0-5-4-9.5-9-9.5zM7.5 11h.01M10 7.5h.01M14 7.5h.01" />,
+  bolt: <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" />,
+};
+
 const FEATURES = [
-  { title: "Pensé en FCFA", text: "Des prix à la réalité d'ici : Mobile Money, hébergement, domaine, acompte à la commande." },
-  { title: "Un devis à ton image", text: "Ton logo, ta couleur, tes conditions, une note pour justifier chaque prix." },
-  { title: "Zéro prise de tête", text: "Pas de tableur, pas de Word à mettre en page. Un devis en moins de deux minutes." },
+  { icon: "coin", title: "Pensé en FCFA", text: "Des prix à la réalité d'ici : Mobile Money, hébergement, domaine, acompte à la commande." },
+  { icon: "palette", title: "Un devis à ton image", text: "Ton logo, ta couleur, tes conditions, une note pour justifier chaque prix." },
+  { icon: "bolt", title: "Zéro prise de tête", text: "Pas de tableur, pas de Word à mettre en page. Un devis en moins de deux minutes." },
 ];
 
 export default function Home() {
   return (
     <main>
       <section className="hero">
-        <div className="hero-inner">
-          <p className="eyebrow">Fait par une dev, pour les devs</p>
-          <h1>Ton devis de développeur, prêt à envoyer en deux minutes.</h1>
-          <p className="hero-sub">
-            Coche les fonctionnalités du projet. {SITE.name} calcule le prix en FCFA et génère un PDF propre à ton nom.
-          </p>
-          <div className="hero-actions">
-            <Link href="/devis/" className="btn btn-light">Créer un devis</Link>
-            <a href="#essai" className="btn btn-ghost">Essayer ici</a>
+        <span className="blob blob-a" />
+        <span className="blob blob-b" />
+        <div className="hero-grid">
+          <div className="hero-text">
+            <p className="eyebrow">Fait par une dev, pour les devs</p>
+            <h1>Ton devis de développeur, prêt à envoyer en deux minutes.</h1>
+            <p className="hero-sub">
+              Coche les fonctionnalités du projet. {SITE.name} calcule le prix en FCFA et génère un PDF propre à ton nom.
+            </p>
+            <div className="hero-actions">
+              <Link href="/devis/" className="btn btn-light">Créer un devis</Link>
+              <a href="#essai" className="btn btn-ghost">Essayer ici</a>
+            </div>
           </div>
+          <HeroDemo />
         </div>
       </section>
 
       <section className="section" id="essai">
-        <h2 className="section-title">Essaie, sans compte</h2>
-        <p className="section-sub">Coche, décoche, regarde le prix bouger.</p>
-        <MiniSim />
+        <Reveal>
+          <h2 className="section-title">Essaie, sans compte</h2>
+          <p className="section-sub">Coche, décoche, regarde le prix bouger.</p>
+          <MiniSim />
+        </Reveal>
       </section>
 
       <section className="section">
-        <h2 className="section-title">Comment ça marche</h2>
+        <Reveal>
+          <h2 className="section-title">Comment ça marche</h2>
+        </Reveal>
         <div className="steps">
-          {STEPS.map((s) => (
-            <div className="step card" key={s.n}>
-              <span className="step-n">{s.n}</span>
-              <h3>{s.title}</h3>
-              <p>{s.text}</p>
-            </div>
+          {STEPS.map((s, i) => (
+            <Reveal key={s.n} delay={i * 120}>
+              <div className="step card">
+                <span className="step-n">{s.n}</span>
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
       </section>
 
       <section className="section">
         <div className="steps">
-          {FEATURES.map((f) => (
-            <div className="card" key={f.title}>
-              <h3>{f.title}</h3>
-              <p>{f.text}</p>
-            </div>
+          {FEATURES.map((f, i) => (
+            <Reveal key={f.title} delay={i * 120}>
+              <div className="card feature">
+                <span className="feature-icon">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    {ICONS[f.icon]}
+                  </svg>
+                </span>
+                <h3>{f.title}</h3>
+                <p>{f.text}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
       </section>
 
-      <section className="cta">
-        <h2>Prêt à envoyer ton prochain devis ?</h2>
-        <Link href="/devis/" className="btn btn-light">Créer un devis</Link>
-      </section>
-
-      <footer className="site-footer">
-        Projet réalisé pour la Coupe d'Afrique des Développeurs 2026 · Systalink Challenge
-      </footer>
+      <Reveal>
+        <section className="cta">
+          <h2>Prêt à envoyer ton prochain devis ?</h2>
+          <Link href="/devis/" className="btn">Créer un devis</Link>
+        </section>
+      </Reveal>
     </main>
   );
 }

@@ -32,7 +32,7 @@ export default function MiniSim() {
       ))}
       <div className="mini-total">
         <span>Total estimé</span>
-        <strong>{formatFCFA(quote.total)}</strong>
+        <strong key={quote.total}>{formatFCFA(quote.total)}</strong>
       </div>
       <Link href="/devis/" className="btn btn-block">Créer mon devis complet</Link>
     </div>

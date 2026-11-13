@@ -528,7 +528,7 @@ export default function QuoteEditor() {
       <div className="total-bar">
         <div>
           <small>{quote.lines.length} ligne(s)</small>
-          <strong>{formatFCFA(quote.total)}</strong>
+          <strong key={quote.total}>{formatFCFA(quote.total)}</strong>
         </div>
         <button className="btn" onClick={downloadPdf} disabled={quote.lines.length === 0 || busy}>
           {busy ? "Création..." : "PDF"}

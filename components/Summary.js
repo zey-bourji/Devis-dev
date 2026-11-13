@@ -40,7 +40,7 @@ export default function Summary({ quote, number, busy, onPdf, whatsappHref, mail
       )}
       <div className="summary-total">
         <span>Total</span>
-        <strong>{formatFCFA(quote.total)}</strong>
+        <strong key={quote.total}>{formatFCFA(quote.total)}</strong>
       </div>
 
       {account.user ? (
