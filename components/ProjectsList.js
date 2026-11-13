@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
 import { useUser } from "../lib/useUser";
+import { formatFCFA } from "../lib/pricing";
+
+// Les filtres de la liste des devis. « Traités » = acceptés ou refusés.
+const FILTERS = [
+  { id: "tous", label: "Tous" },
+  { id: "brouillon", label: "Brouillons", match: ["brouillon"] },
+  { id: "envoyé", label: "Envoyés", match: ["envoyé"] },
+  { id: "traité", label: "Traités", match: ["accepté", "refusé"] },
+];
 
 export default function ProjectsList() {
   const { user, ready } = useUser();
@@ -11,6 +20,9 @@ export default function ProjectsList() {
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", client_name: "", description: "" });
   const [creating, setCreating] = useState(false);
+  const [view, setView] = useState("projets"); // "projets" ou "devis"
+  const [quotes, setQuotes] = useState(null);
+  const [filter, setFilter] = useState("tous");
   const [showForm, setShowForm] = useState(false); // le formulaire s'ouvre seulement au clic
 
   // Charge les projets de la personne connectée (les règles RLS ne renvoient que les siens).
@@ -24,6 +36,11 @@ export default function ProjectsList() {
         if (error) setError("Impossible de charger tes projets : " + error.message);
         else setProjects(data);
       });
+    supabase
+      .from("quotes")
+      .select("id, number, status, total, updated_at, project_id, data")
+      .order("updated_at", { ascending: false })
+      .then(({ data }) => setQuotes(data || []));
   }, [user]);
 
   async function createProject(e) {
@@ -50,6 +67,11 @@ export default function ProjectsList() {
   }
 
   const list = projects || [];
+  const allQuotes = quotes || [];
+  const count = (f) => (f.match ? allQuotes.filter((q) => f.match.includes(q.status)).length : allQuotes.length);
+  const active = FILTERS.find((f) => f.id === filter);
+  const shownQuotes = active.match ? allQuotes.filter((q) => active.match.includes(q.status)) : allQuotes;
+  const projectName = (id) => list.find((p) => p.id === id)?.name;
 
   return (
     <>
@@ -61,6 +83,56 @@ export default function ProjectsList() {
       </div>
       {error && <p className="error">{error}</p>}
 
+      <div className="tabs" role="tablist">
+        <button type="button" role="tab" aria-selected={view === "projets"} className={"tab" + (view === "projets" ? " on" : "")} onClick={() => setView("projets")}>
+          Projets <span className="tab-count">{list.length}</span>
+        </button>
+        <button type="button" role="tab" aria-selected={view === "devis"} className={"tab" + (view === "devis" ? " on" : "")} onClick={() => setView("devis")}>
+          Devis <span className="tab-count">{allQuotes.length}</span>
+        </button>
+      </div>
+
+      {view === "devis" ? (
+        <>
+          <div className="presets">
+            {FILTERS.map((f) => (
+              <button type="button" key={f.id} className={"chip" + (filter === f.id ? " chip-on" : "")} onClick={() => setFilter(f.id)}>
+                {f.label} ({count(f)})
+              </button>
+            ))}
+          </div>
+          {quotes === null && <p className="muted">Chargement de tes devis...</p>}
+          {quotes && shownQuotes.length === 0 && (
+            <div className="card center-card">
+              <p className="muted">
+                {allQuotes.length === 0 ? "Tu n'as encore enregistré aucun devis." : "Aucun devis dans cette catégorie."}
+              </p>
+              {allQuotes.length === 0 && <Link href="/devis/" className="btn">Créer un devis</Link>}
+            </div>
+          )}
+          {shownQuotes.length > 0 && (
+            <section className="card">
+              {shownQuotes.map((q) => (
+                <Link href={`/devis/?quote=${q.id}`} className="quote-row" key={q.id}>
+                  <span>
+                    <strong>{q.number}</strong>
+                    <small className="muted block">
+                      {q.data?.client?.name || "Sans client"}
+                      {projectName(q.project_id) ? " · " + projectName(q.project_id) : ""}
+                      {" · " + new Date(q.updated_at).toLocaleDateString("fr-FR")}
+                    </small>
+                  </span>
+                  <span className="quote-row-right">
+                    <span className={"badge status-" + q.status}>{q.status}</span>
+                    <b>{formatFCFA(Number(q.total))}</b>
+                  </span>
+                </Link>
+              ))}
+            </section>
+          )}
+        </>
+      ) : (
+      <>
       {showForm && (
         <section className="card new-project">
           <h2>Nouveau projet</h2>
@@ -109,6 +181,8 @@ export default function ProjectsList() {
           <span className="badge">{p.quotes?.[0]?.count ?? 0} devis</span>
         </Link>
       ))}
+      </>
+      )}
     </>
   );
 }

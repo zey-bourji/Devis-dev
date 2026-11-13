@@ -360,3 +360,15 @@ select {
 }
 .btn-light { background: #eef0fb; color: var(--brand); border-color: transparent; }
 .btn-light:hover { background: #e2e5f7; }
+
+/* ---------- Onglets et filtres de la liste ---------- */
+.tabs { display: flex; gap: 6px; background: #eceef7; border-radius: 12px; padding: 4px; margin-bottom: 14px; }
+.tab { flex: 1; font: inherit; font-weight: 700; font-size: 14px; border: none; background: transparent; color: var(--muted); padding: 9px 10px; border-radius: 9px; cursor: pointer; }
+.tab.on { background: #fff; color: var(--brand); box-shadow: 0 1px 3px rgba(30, 35, 90, 0.12); }
+.tab-count { background: #dfe2f3; border-radius: 999px; padding: 1px 8px; font-size: 12px; margin-left: 4px; }
+.chip-on { background: var(--brand); color: #fff; }
+.muted.block, small.block { display: block; margin-top: 2px; }
+@media (max-width: 560px) {
+  .quote-row { flex-wrap: wrap; }
+  .quote-row-right { width: 100%; justify-content: space-between; }
+}
