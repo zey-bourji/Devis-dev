@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CATEGORIES, DEFAULT_DAILY_RATE } from "../lib/features";
 import { buildQuote, formatFCFA, itemPrice } from "../lib/pricing";
 import { addDays, formatDate, makeQuoteNumber } from "../lib/quote";
@@ -11,6 +11,8 @@ import { buildSchedule, DEFAULT_SCHEDULE, RHYTHMS, SCHEDULE_PRESETS } from "../l
 import { analyzeSpecs } from "../lib/analyze";
 import { supabase } from "../lib/supabase";
 import { useUser } from "../lib/useUser";
+import { askAssistant } from "../lib/assistant";
+import AiChat from "./AiChat";
 import BrandingCard from "./BrandingCard";
 import Summary from "./Summary";
 
@@ -244,6 +246,62 @@ export default function QuoteEditor() {
 
   const payments = buildSchedule(quote.total, schedule);
 
+  // --- L'assistant : applique les actions demandées par le chat, une par une ---
+  // On garde la fonction à jour dans une "ref" : les actions arrivent avec des pauses,
+  // et chaque pause doit utiliser l'état le plus récent du devis.
+  const stepRef = useRef(null);
+  stepRef.current = (op) => {
+    switch (op.op) {
+      case "select": setSelected((s) => new Set(s).add(op.id)); break;
+      case "unselect": setSelected((s) => { const n = new Set(s); n.delete(op.id); return n; }); break;
+      case "days": setOverrides((o) => ({ ...o, [op.id]: { days: op.value } })); break;
+      case "price": setOverrides((o) => ({ ...o, [op.id]: { ...(o[op.id] || {}), price: op.value } })); break;
+      case "rate": changeRate(op.value); break;
+      case "discount_percent": setDiscountPercent(op.value); break;
+      case "discount_amount": setDiscountAmount(op.value); break;
+      case "round": roundTotal(op.step); break;
+      case "schedule": setSchedule((s) => ({ ...s, ...op.patch })); break;
+      case "template": setBrand((b) => ({ ...DEFAULT_BRAND, ...b, template: op.value })); break;
+      case "color": setBrand((b) => ({ ...DEFAULT_BRAND, ...b, color: op.value })); break;
+      case "client": setClient((c) => ({ ...c, ...(op.name && { name: op.name }), ...(op.project && { project: op.project }) })); break;
+      case "note": setNotes((n) => ({ ...n, [op.id]: op.text })); break;
+      case "custom": setCustomLines((l) => [...l, { id: "c" + Date.now() + Math.random().toString(36).slice(2, 5), label: op.label, price: op.price }]); break;
+    }
+  };
+
+  function playOps(ops, onStep) {
+    return new Promise((resolve) => {
+      const gap = Math.max(200, Math.min(450, 4500 / Math.max(ops.length, 1)));
+      ops.forEach((op, i) => {
+        setTimeout(() => {
+          stepRef.current(op);
+          onStep(op);
+          if (i === ops.length - 1) setTimeout(resolve, 250);
+        }, 150 + i * gap);
+      });
+    });
+  }
+
+  // Ce que l'IA voit du devis : le catalogue et l'état actuel (jamais les infos personnelles du dev).
+  const aiContext = {
+    catalogue: CATEGORIES.flatMap((c) =>
+      c.items.map((i) => ({ id: i.id, label: i.label, category: c.label, type: i.type, days: i.days, min: i.min, max: i.max, price: i.price }))
+    ),
+    state: {
+      selected: [...selected],
+      lines: quote.lines.map((l) => ({ id: l.id, days: l.days, price: l.price })),
+      dailyRate: rate,
+      discountPercent,
+      discountAmount,
+      schedule,
+      template: brand.template,
+      client,
+      total: quote.total,
+    },
+    specs: specs.slice(0, 6000),
+  };
+  const askAi = (message, history) => askAssistant({ message, history, context: aiContext, user });
+
   const text = shareText({ dev, client, quote, number });
   const whatsappHref = whatsappUrl(text);
   const mailHref = mailtoUrl(`Devis ${number}${client.project ? " - " + client.project : ""}`, text);
@@ -286,6 +344,8 @@ export default function QuoteEditor() {
     <div className="editor">
       <div className="editor-main">
         <h1 className="page-title">Nouveau devis</h1>
+
+        <AiChat user={user} ready={ready} hasSpecs={!!specs.trim()} onAsk={askAi} onPlay={playOps} />
 
         <section className="card">
           <h2>Toi</h2>

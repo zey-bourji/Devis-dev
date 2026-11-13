@@ -1,0 +1,129 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { describeOp } from "../lib/aiOps";
+
+// La fenêtre de chat de l'assistant. Elle ne connaît pas le devis :
+// elle envoie le message (onAsk), puis rejoue les actions une par une (onPlay) pour que le devis se remplisse sous les yeux.
+export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay }) {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [thinking, setThinking] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const box = useRef(null);
+
+  // Le message de bienvenue dépend de la connexion.
+  useEffect(() => {
+    if (!ready) return;
+    setMessages([
+      {
+        role: "assistant",
+        welcome: true,
+        text: user
+          ? "Salut ! Décris-moi le projet (ou colle le cahier des charges) et je remplis le devis pour toi. Tu peux aussi me demander de changer un prix, une remise ou le paiement en plusieurs fois."
+          : "Salut ! Je suis en mode essai : je repère des mots-clés (« paiement Wave », « 10 % de remise », « en 3 fois »). Connecte-toi pour débloquer l'assistant IA complet.",
+        steps: [],
+      },
+    ]);
+  }, [ready, !!user]);
+
+  // Fait défiler la conversation vers le bas.
+  useEffect(() => {
+    if (box.current) box.current.scrollTop = box.current.scrollHeight;
+  }, [messages, thinking]);
+
+  const busy = thinking || playing;
+
+  async function send(raw) {
+    const text = (raw ?? input).trim();
+    if (!text || busy) return;
+    setInput("");
+    const history = messages.filter((m) => !m.welcome).map((m) => ({ role: m.role, content: m.text }));
+    setMessages((m) => [...m, { role: "user", text }]);
+    setThinking(true);
+
+    const res = await onAsk(text, history);
+    setThinking(false);
+
+    let index;
+    setMessages((m) => {
+      index = m.length;
+      return [...m, { role: "assistant", text: res.reply || "C'est fait.", steps: [], warn: res.warn, source: res.source }];
+    });
+    if (res.ops.length) {
+      setPlaying(true);
+      await onPlay(res.ops, (op) => {
+        setMessages((m) => m.map((msg, i) => (i === index ? { ...msg, steps: [...msg.steps, describeOp(op)] } : msg)));
+      });
+      setPlaying(false);
+    }
+  }
+
+  const suggestions = [
+    "Une boutique en ligne avec paiement Wave et un espace admin",
+    ...(hasSpecs ? ["Lis mon cahier des charges et fais le devis"] : []),
+    "Paiement en 3 fois",
+    "Ajoute 10 % de remise",
+  ];
+
+  return (
+    <section className="card ai-card">
+      <div className="ai-head">
+        <span className="ai-spark" aria-hidden="true">✦</span>
+        <div>
+          <h2>Assistant</h2>
+          <small className="muted">{user ? "IA : dis-lui ce que tu veux, le devis se remplit." : "Mode essai, sans IA"}</small>
+        </div>
+      </div>
+
+      <div className="ai-messages" ref={box} aria-live="polite">
+        {messages.map((m, i) => (
+          <div key={i} className={"ai-msg " + m.role}>
+            <p>{m.text}</p>
+            {m.steps?.length > 0 && (
+              <ul className="ai-steps">
+                {m.steps.map((s, j) => (
+                  <li key={j}>✓ {s}</li>
+                ))}
+              </ul>
+            )}
+            {m.warn && <small className="ai-warn">{m.warn} J'ai utilisé le mode simple.</small>}
+          </div>
+        ))}
+        {thinking && (
+          <div className="ai-msg assistant">
+            <span className="ai-dots" aria-label="L'assistant réfléchit">
+              <i></i><i></i><i></i>
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="presets">
+        {suggestions.map((s) => (
+          <button type="button" key={s} className="chip" disabled={busy} onClick={() => send(s)}>
+            {s}
+          </button>
+        ))}
+      </div>
+
+      <form
+        className="ai-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          send();
+        }}
+      >
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ex : site pour un salon de coiffure, avec réservation..."
+          disabled={busy}
+          aria-label="Ton message à l'assistant"
+        />
+        <button className="btn" disabled={busy || !input.trim()}>Envoyer</button>
+      </form>
+    </section>
+  );
+}
