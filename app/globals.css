@@ -1,0 +1,47 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: #f5f6fa;
+  color: #1c1f2a;
+}
+
+.page { max-width: 720px; margin: 0 auto; padding: 24px 16px 110px; }
+
+.header h1 { margin: 0 0 4px; font-size: 28px; }
+.header p { margin: 0 0 20px; color: #5b6070; }
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(20, 24, 40, 0.08);
+}
+.card h2 { margin: 0 0 8px; font-size: 16px; color: #3b3f8f; }
+
+.rate { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
+.rate input {
+  font-size: 18px; padding: 10px 12px; border: 1px solid #d3d6e0; border-radius: 10px;
+}
+
+.item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  border-top: 1px solid #eef0f5; cursor: pointer;
+}
+.item:first-of-type { border-top: none; }
+.item input { width: 20px; height: 20px; accent-color: #3b3f8f; flex-shrink: 0; }
+.item-label { flex: 1; }
+.item-label small { color: #8a8fa3; margin-left: 4px; }
+.item-price { font-weight: 600; white-space: nowrap; }
+
+.total-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; background: #3b3f8f; color: #fff;
+  padding: 14px 20px;
+}
+.total-bar > div {
+  max-width: 720px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;
+}
+.total-bar small { opacity: 0.8; }
+.total-bar strong { font-size: 22px; }
