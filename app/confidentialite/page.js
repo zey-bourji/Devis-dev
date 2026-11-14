@@ -33,6 +33,21 @@ export default function ConfidentialitePage() {
         vendons pas tes données, nous ne les partageons pas avec des annonceurs, et nous n'envoyons pas de publicité.
       </p>
 
+      <h2>L'assistant IA</h2>
+      <p>
+        Quand tu écris à l'assistant, ton message et l'état de ton devis (fonctionnalités, prix, cahier des
+        charges, nom du client s'il est rempli) sont envoyés à un fournisseur d'intelligence artificielle
+        (Google Gemini ou Groq) pour qu'il te réponde. Ne lui écris pas d'informations dont tu n'as pas besoin :
+        mots de passe, informations bancaires ou données personnelles de tes clients. Le fournisseur peut
+        garder ces échanges selon ses propres règles, qui peuvent, sur les offres gratuites, inclure
+        l'amélioration de ses modèles.
+      </p>
+      <p>
+        L'assistant ne répond qu'aux sujets de devis. Pour éviter les abus, les demandes refusées (hors sujet,
+        inappropriées ou dangereuses) sont enregistrées avec un extrait du message, et l'accès peut être
+        suspendu en cas d'abus répété.
+      </p>
+
       <h2>Qui peut voir tes devis</h2>
       <p>
         Toi seulement. Chaque devis est privé et lié à ton compte. Un devis n'est vu par ton client que si tu

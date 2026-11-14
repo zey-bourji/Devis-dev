@@ -36,6 +36,14 @@ export default function ConditionsPage() {
         pouvons suspendre un compte qui ne respecte pas ces règles.
       </p>
 
+      <h2>L'assistant IA</h2>
+      <p>
+        L'assistant est réservé aux devis : projets, fonctionnalités, prix, remise et paiement. Il peut se
+        tromper : vérifie toujours les lignes et les prix qu'il propose avant d'envoyer un devis. Les demandes
+        sans rapport avec les devis, inappropriées, dangereuses ou qui cherchent à contourner ses règles sont
+        refusées, et l'accès à l'assistant peut être suspendu ou retiré en cas d'abus.
+      </p>
+
       <h2>Disponibilité</h2>
       <p>
         L'outil est fourni tel quel, sans garantie qu'il fonctionne sans interruption. Nous faisons de notre
