@@ -46,7 +46,7 @@ export default function AccountPage() {
   async function deleteAccount() {
     setDelMsg("");
     setBusy(true);
-    const { error } = await supabase.functions.invoke("delete-account");
+    const { error } = await supabase.functions.invoke("super-responder");
     setBusy(false);
     if (error) return setDelMsg("Suppression impossible pour le moment : " + error.message);
     await supabase.auth.signOut();
