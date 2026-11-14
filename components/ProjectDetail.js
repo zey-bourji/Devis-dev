@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "../lib/supabase";
 import { useUser } from "../lib/useUser";
 import { formatFCFA } from "../lib/pricing";
+import { statusClass } from "../lib/tracking";
 
 export default function ProjectDetail() {
   const { user, ready } = useUser();
@@ -127,7 +128,7 @@ export default function ProjectDetail() {
               <small className="muted"> · {new Date(q.updated_at).toLocaleDateString("fr-FR")}</small>
             </span>
             <span className="quote-row-right">
-              <span className={"badge status-" + q.status}>{q.status}</span>
+              <span className={"badge " + statusClass(q.status)}>{q.status}</span>
               <b>{formatFCFA(Number(q.total))}</b>
             </span>
           </Link>

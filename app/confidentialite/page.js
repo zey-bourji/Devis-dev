@@ -50,8 +50,18 @@ export default function ConfidentialitePage() {
 
       <h2>Qui peut voir tes devis</h2>
       <p>
-        Toi seulement. Chaque devis est privé et lié à ton compte. Un devis n'est vu par ton client que si tu
-        lui envoies toi-même le PDF ou le message.
+        Les autres utilisateurs ne les voient jamais : chaque devis est privé et lié à ton compte. Un devis n'est
+        vu par ton client que si tu lui envoies toi-même le PDF ou le message. L'administrateur du service a,
+        techniquement, accès à la base de données pour la maintenance, mais ne consulte pas tes devis
+        sans raison.
+      </p>
+
+      <h2>Le suivi et les preuves de paiement</h2>
+      <p>
+        Tu peux marquer les paiements reçus et joindre une capture ou un reçu. Ces fichiers (images ou PDF)
+        sont stockés dans un espace privé, rangé à ton nom, et ne sont ouverts que par toi avec un lien
+        temporaire. Ils sont supprimés quand tu les retires ou quand ton compte est supprimé. Évite d'y joindre
+        des informations bancaires inutiles.
       </p>
 
       <h2>Où sont stockées les données</h2>

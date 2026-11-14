@@ -149,7 +149,7 @@ export default function QuotePdf({ dev, client, quote, number, dateText, validUn
         ))}
 
         <View style={s.totals} wrap={false}>
-          {quote.discount > 0 ? (
+          {quote.discount > 0 || quote.adjustment ? (
             <View>
               <View style={s.totalRow}>
                 <Text>Sous-total</Text>
@@ -167,6 +167,12 @@ export default function QuotePdf({ dev, client, quote, number, dateText, validUn
                   <Text>{formatFCFA(-quote.discountAmount)}</Text>
                 </View>
               ) : null}
+            </View>
+          ) : null}
+          {quote.adjustment ? (
+            <View style={s.totalRow}>
+              <Text>Ajustement convenu</Text>
+              <Text>{formatFCFA(quote.adjustment)}</Text>
             </View>
           ) : null}
           <View style={[s.grand, v.grand]}>

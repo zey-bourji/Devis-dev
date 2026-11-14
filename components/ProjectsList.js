@@ -5,13 +5,17 @@ import Link from "next/link";
 import { supabase } from "../lib/supabase";
 import { useUser } from "../lib/useUser";
 import { formatFCFA } from "../lib/pricing";
+import { statusClass } from "../lib/tracking";
 
-// Les filtres de la liste des devis. « Traités » = acceptés ou refusés.
+// Les filtres de la liste des devis. « En cours » = acceptés ou en cours ; « Annulés » = annulés ou refusés.
 const FILTERS = [
   { id: "tous", label: "Tous" },
   { id: "brouillon", label: "Brouillons", match: ["brouillon"] },
   { id: "envoyé", label: "Envoyés", match: ["envoyé"] },
-  { id: "traité", label: "Traités", match: ["accepté", "refusé"] },
+  { id: "cours", label: "En cours", match: ["accepté", "en cours"] },
+  { id: "terminé", label: "Terminés", match: ["terminé"] },
+  { id: "reporté", label: "Reportés", match: ["reporté"] },
+  { id: "annulé", label: "Annulés", match: ["annulé", "refusé"] },
 ];
 
 export default function ProjectsList() {
@@ -123,7 +127,7 @@ export default function ProjectsList() {
                     </small>
                   </span>
                   <span className="quote-row-right">
-                    <span className={"badge status-" + q.status}>{q.status}</span>
+                    <span className={"badge " + statusClass(q.status)}>{q.status}</span>
                     <b>{formatFCFA(Number(q.total))}</b>
                   </span>
                 </Link>

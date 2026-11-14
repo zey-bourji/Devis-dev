@@ -12,7 +12,9 @@ import { analyzeSpecs } from "../lib/analyze";
 import { supabase } from "../lib/supabase";
 import { useUser } from "../lib/useUser";
 import { askAssistant } from "../lib/assistant";
+import { DEFAULT_DATES, effectiveTotal, paymentSummary } from "../lib/tracking";
 import AiChat from "./AiChat";
+import TrackingCard from "./TrackingCard";
 import BrandingCard from "./BrandingCard";
 import Summary from "./Summary";
 
@@ -25,6 +27,11 @@ export default function QuoteEditor() {
   const [discountAmount, setDiscountAmount] = useState(0); // remise en FCFA (ex : 1 000 pour arrondir)
   const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE); // comment le client paie (acompte, versements...)
   const [overrides, setOverrides] = useState({});         // jours / prix modifiés ligne par ligne
+  const [agreedTotal, setAgreedTotal] = useState(null);   // total convenu avec le client (vide = total estimé)
+  const [paid, setPaid] = useState({});                   // paiements reçus : { numéroÉchéance: { date, proof } }
+  const [dates, setDates] = useState(DEFAULT_DATES);      // début, livraison, report
+  const [cancelReason, setCancelReason] = useState("");
+  const [dirty, setDirty] = useState(false);              // le suivi a changé : on enregistre tout seul
   const [client, setClient] = useState({ name: "", project: "" });
   const [number, setNumber] = useState("");
   const [busy, setBusy] = useState(false);
@@ -145,6 +152,10 @@ export default function QuoteEditor() {
         setDiscountAmount(d.discountAmount || 0);
         setOverrides(d.overrides || {});
         setSchedule({ ...DEFAULT_SCHEDULE, ...(d.schedule || {}) });
+        setAgreedTotal(d.agreedTotal ?? null);
+        setPaid(d.paid || {});
+        setDates({ ...DEFAULT_DATES, ...(d.dates || {}) });
+        setCancelReason(d.cancelReason || "");
         setClient(d.client || { name: "", project: "" });
         setSpecs(d.specs || "");
         setQuoteRate(d.dailyRate ?? null);
@@ -168,17 +179,17 @@ export default function QuoteEditor() {
   }
 
   // Enregistre (ou met à jour) le devis dans le compte.
-  async function saveQuote() {
+  async function saveQuote(silent = false) {
     if (!user) return;
     setSaving(true);
-    setNotice("");
+    if (!silent) setNotice("");
     const payload = {
       project_id: projectId || null,
       number,
       status,
-      total: quote.total,
+      total,
       updated_at: new Date().toISOString(),
-      data: { selected: [...selected], notes, customLines, discountPercent, discountAmount, overrides, schedule, client, specs, dailyRate: rate },
+      data: { selected: [...selected], notes, customLines, discountPercent, discountAmount, overrides, schedule, agreedTotal, paid, dates, cancelReason, client, specs, dailyRate: rate },
     };
     let error;
     if (quoteId) {
@@ -193,7 +204,8 @@ export default function QuoteEditor() {
       }
     }
     setSaving(false);
-    setNotice(error ? "Échec de l'enregistrement : " + error.message : "Devis enregistré ✓");
+    if (!error) setDirty(false);
+    setNotice(error ? "Échec de l'enregistrement : " + error.message : silent ? "Suivi enregistré ✓" : "Devis enregistré ✓");
   }
 
   function toggle(id) {
@@ -226,6 +238,11 @@ export default function QuoteEditor() {
     setDiscountAmount(0);
     setOverrides({});
     setSchedule(DEFAULT_SCHEDULE);
+    setAgreedTotal(null);
+    setPaid({});
+    setDates(DEFAULT_DATES);
+    setCancelReason("");
+    setDirty(false);
     setClient({ name: "", project: "" });
     setNumber(makeQuoteNumber());
     setQuoteId(null);
@@ -244,7 +261,20 @@ export default function QuoteEditor() {
     setDiscountAmount((quote.subtotal - quote.discountPercentAmount) % step);
   }
 
-  const payments = buildSchedule(quote.total, schedule);
+  // Le total qui compte : celui convenu avec le client, sinon l'estimation. Le PDF, l'échéancier et la liste l'utilisent.
+  const total = effectiveTotal(quote.total, agreedTotal);
+  const finalQuote = { ...quote, estimated: quote.total, total, adjustment: total - quote.total };
+  const payments = buildSchedule(total, schedule);
+  const tracking = paymentSummary(payments, paid, total);
+
+  // Le suivi (statut, paiements, dates) s'enregistre tout seul, un instant après chaque changement.
+  const mark = () => setDirty(true);
+  const changeStatus = (value) => { setStatus(value); mark(); };
+  useEffect(() => {
+    if (!dirty || !quoteId || !user) return;
+    const timer = setTimeout(() => saveQuote(true), 900);
+    return () => clearTimeout(timer);
+  }, [dirty, paid, agreedTotal, dates, cancelReason, status]);
 
   // --- L'assistant : applique les actions demandées par le chat, une par une ---
   // On garde la fonction à jour dans une "ref" : les actions arrivent avec des pauses,
@@ -302,7 +332,7 @@ export default function QuoteEditor() {
   };
   const askAi = (message, history) => askAssistant({ message, history, context: aiContext, user });
 
-  const text = shareText({ dev, client, quote, number });
+  const text = shareText({ dev, client, quote: finalQuote, number });
   const whatsappHref = whatsappUrl(text);
   const mailHref = mailtoUrl(`Devis ${number}${client.project ? " - " + client.project : ""}`, text);
 
@@ -320,7 +350,7 @@ export default function QuoteEditor() {
         <QuotePdf
           dev={dev}
           client={client}
-          quote={quote}
+          quote={finalQuote}
           number={number}
           brand={brand}
           payments={payments}
@@ -577,6 +607,31 @@ export default function QuoteEditor() {
         </section>
 
         <section className="card">
+          <h2>Total convenu</h2>
+          <p className="muted">Si tu t'es mis d'accord avec ton client sur un autre montant, saisis-le ici. L'échéancier et le PDF suivent ce total.</p>
+          <div className="agreed-row">
+            <div><small>Total estimé</small><b>{formatFCFA(quote.total)}</b></div>
+            <label className="field">
+              Total convenu (FCFA)
+              <input
+                type="number"
+                min="0"
+                step="1000"
+                placeholder="Laisser vide = total estimé"
+                value={agreedTotal ?? ""}
+                onChange={(e) => { setAgreedTotal(e.target.value === "" ? null : Math.max(0, Number(e.target.value) || 0)); mark(); }}
+              />
+            </label>
+          </div>
+          {finalQuote.adjustment !== 0 && (
+            <p className="info">
+              Ajustement : {formatFCFA(finalQuote.adjustment)} par rapport à l'estimation.{" "}
+              <button type="button" className="link-btn" onClick={() => { setAgreedTotal(null); mark(); }}>Rétablir l'estimation</button>
+            </p>
+          )}
+        </section>
+
+        <section className="card">
           <h2>Modalités de paiement</h2>
           <div className="presets">
             {SCHEDULE_PRESETS.map((p) => (
@@ -628,26 +683,43 @@ export default function QuoteEditor() {
           </ul>
         </section>
 
+        {user && (
+          <TrackingCard
+            user={user}
+            quoteId={quoteId}
+            status={status}
+            total={total}
+            payments={payments}
+            paid={paid}
+            setPaid={(v) => { setPaid(v); mark(); }}
+            dates={dates}
+            setDates={(v) => { setDates(v); mark(); }}
+            cancelReason={cancelReason}
+            setCancelReason={(v) => { setCancelReason(v); mark(); }}
+          />
+        )}
+
         <BrandingCard brand={brand} setBrand={setBrand} />
       </div>
 
       <div className="editor-side">
         <Summary
-          quote={quote}
+          quote={finalQuote}
+          tracking={tracking}
           number={number}
           busy={busy}
           onPdf={downloadPdf}
           whatsappHref={whatsappHref}
           mailHref={mailHref}
           onReset={reset}
-          account={{ user, ready, status, setStatus, saving, notice, onSave: saveQuote, saved: !!quoteId }}
+          account={{ user, ready, status, setStatus: changeStatus, saving, notice, onSave: () => saveQuote(false), saved: !!quoteId }}
         />
       </div>
 
       <div className="total-bar">
         <div>
           <small>{quote.lines.length} ligne(s)</small>
-          <strong key={quote.total}>{formatFCFA(quote.total)}</strong>
+          <strong key={finalQuote.total}>{formatFCFA(finalQuote.total)}</strong>
         </div>
         <button className="btn" onClick={downloadPdf} disabled={quote.lines.length === 0 || busy}>
           {busy ? "Création..." : "PDF"}

@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { formatFCFA } from "../lib/pricing";
-
-const STATUSES = ["brouillon", "envoyé", "accepté", "refusé"];
+import { STATUSES } from "../lib/tracking";
 
 // Le récapitulatif en direct : lignes choisies, remise, total, enregistrement et envoi.
-export default function Summary({ quote, number, busy, onPdf, whatsappHref, mailHref, onReset, account }) {
+export default function Summary({ quote, tracking, number, busy, onPdf, whatsappHref, mailHref, onReset, account }) {
   const empty = quote.lines.length === 0;
 
   // Un lien désactivé doit vraiment ne rien faire.
@@ -38,10 +37,22 @@ export default function Summary({ quote, number, busy, onPdf, whatsappHref, mail
           <span>{formatFCFA(-quote.discount)}</span>
         </div>
       )}
+      {quote.adjustment !== 0 && (
+        <div className="summary-sub">
+          <span>Total estimé</span>
+          <span>{formatFCFA(quote.estimated)}</span>
+        </div>
+      )}
       <div className="summary-total">
-        <span>Total</span>
+        <span>{quote.adjustment !== 0 ? "Total convenu" : "Total"}</span>
         <strong key={quote.total}>{formatFCFA(quote.total)}</strong>
       </div>
+      {tracking && tracking.received > 0 && (
+        <div className="summary-sub">
+          <span>Encaissé · reste</span>
+          <span>{formatFCFA(tracking.received)} · {formatFCFA(tracking.remaining)}</span>
+        </div>
+      )}
 
       {account.user ? (
         <div className="save-box">
