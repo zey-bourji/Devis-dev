@@ -67,7 +67,7 @@ export default function ConfidentialitePage() {
       <h2>Où sont stockées les données</h2>
       <p>
         Les comptes et les devis sont hébergés chez Supabase, notre prestataire de base de données. Le site
-        lui-même est hébergé chez Systalink.
+        lui-même est hébergé chez Cloudflare.
       </p>
 
       <h2>Les données de tes clients</h2>
@@ -78,8 +78,10 @@ export default function ConfidentialitePage() {
 
       <h2>Tes droits</h2>
       <p>
-        Tu peux modifier ou supprimer tes projets et tes devis à tout moment depuis ton compte. Pour supprimer
-        ton compte et toutes tes données, écris-nous et nous le ferons.
+        Tu peux modifier ou supprimer tes projets et tes devis à tout moment depuis ton compte. Tu peux aussi supprimer ton
+        compte toi-même, depuis « Mon compte » : tes projets, tes devis et tes preuves de paiement sont alors
+        effacés définitivement. Les statistiques de « Mon compte » (encaissé du mois, nombre de devis) sont
+        calculées à partir de tes propres devis, sans rien envoyer ailleurs.
       </p>
 
       <h2>Contact</h2>
