@@ -31,6 +31,7 @@ export default function AdminPage() {
   const [flags, setFlags] = useState([]);
   const [msg, setMsg] = useState("");
   const [users, setUsers] = useState([]);
+  const [usersError, setUsersError] = useState("");
   const [section, setSection] = useState("apercu");
   const [search, setSearch] = useState("");
 
@@ -41,7 +42,8 @@ export default function AdminPage() {
     if (s.error) return setMsg(s.error.message);
     setStats(s.data);
     setFlags(f.data || []);
-    setUsers(u.error ? null : u.data || []); // null = la fonction SQL n'est pas encore installée
+    setUsersError(u.error ? u.error.message : "");
+    setUsers(u.error ? null : u.data || []); // null = la liste n'a pas pu être chargée
     setState("ok");
   }, []);
 
@@ -136,7 +138,7 @@ export default function AdminPage() {
             <section className="card">
               <h2>Inscrits</h2>
               {users === null ? (
-                <p className="error">La liste n'est pas encore installée. Dans Supabase, ouvre le SQL Editor et lance de nouveau le fichier schema_admin.sql (la fin du fichier ajoute la liste).</p>
+                <p className="error">La liste n'a pas pu être chargée : {usersError}. Dans Supabase, lance de nouveau la fin du fichier schema_admin.sql, puis la ligne « notify pgrst, 'reload schema'; ».</p>
               ) : (
                 <>
                   <div className="admin-tools">
