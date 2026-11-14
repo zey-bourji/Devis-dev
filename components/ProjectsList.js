@@ -190,7 +190,6 @@ export default function ProjectsList() {
 
       {projects && list.length === 0 && !showForm && (
         <div className="card center-card empty-state">
-          <div className="empty-icon" aria-hidden="true">📁</div>
           <h2>Aucun projet pour le moment</h2>
           <p className="muted">Crée ton premier projet pour y ranger tes devis, le cahier des charges et les infos de ton client.</p>
           <button type="button" className="btn" onClick={() => setShowForm(true)}>Créer mon premier projet</button>

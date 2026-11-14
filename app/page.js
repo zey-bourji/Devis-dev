@@ -1,5 +1,5 @@
 import Link from "next/link";
-import HeroDemo from "../components/HeroDemo";
+import QuoteSheet from "../components/QuoteSheet";
 import MiniSim from "../components/MiniSim";
 import Reveal from "../components/Reveal";
 import { SITE } from "../lib/site";
@@ -11,9 +11,9 @@ const STEPS = [
 ];
 
 const FEATURES = [
-  { icon: "coin", title: "Pensé en FCFA", text: "Des prix à la réalité d'ici : Mobile Money, hébergement, domaine, acompte à la commande." },
-  { icon: "palette", title: "Un devis à ton image", text: "Ton logo, ta couleur, tes conditions, une note pour justifier chaque prix." },
-  { icon: "bolt", title: "Zéro prise de tête", text: "Pas de tableur, pas de Word à mettre en page. Un devis en moins de deux minutes." },
+  { icon: "coin", title: "Des prix d'ici", text: "Mobile Money, hébergement, nom de domaine, acompte à la commande : le catalogue part de ce que tu vends vraiment." },
+  { icon: "palette", title: "Un devis à ton image", text: "Ton logo, ta couleur, tes modalités de paiement, et une note sous chaque ligne pour expliquer le prix." },
+  { icon: "bolt", title: "Rien à mettre en page", text: "Pas de tableur, pas de Word. Tu décris le projet, le devis se remplit." },
 ];
 
 export default function Home() {
@@ -22,23 +22,23 @@ export default function Home() {
       <section className="hero">
         <div className="hero-grid">
           <div className="hero-text">
-            <h1>Ton devis de développeur, prêt à envoyer en deux minutes.</h1>
+            <h1>Un devis propre, en FCFA, en deux minutes.</h1>
             <p className="hero-sub">
-              Coche les fonctionnalités du projet. {SITE.name} calcule le prix en FCFA et génère un PDF propre à ton nom.
+              Tu coches ce que contient le projet. {SITE.name} calcule le prix et prépare un PDF à ton nom, prêt à envoyer à ton client.
             </p>
             <div className="hero-actions">
               <Link href="/devis/" className="btn">Créer un devis</Link>
               <a href="#essai" className="btn btn-outline">Essayer sans compte</a>
             </div>
           </div>
-          <HeroDemo />
+          <QuoteSheet />
         </div>
       </section>
 
       <section className="section" id="essai">
         <Reveal>
-          <h2 className="section-title">Essaie, sans compte</h2>
-          <p className="section-sub">Coche, décoche, regarde le prix bouger.</p>
+          <h2 className="section-title">Essaie tout de suite</h2>
+          <p className="section-sub">Pas de compte à créer. Coche une ligne, le total change.</p>
           <MiniSim />
         </Reveal>
       </section>
