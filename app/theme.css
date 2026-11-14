@@ -243,4 +243,13 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
 .ai-form { flex-wrap: wrap; align-items: stretch; }
 .ai-form textarea { flex: 1 1 100%; }
 .ai-form .btn { flex: 1 1 0; }
-.ai-form .btn-outline { flex: 1 1 0; }
+
+
+/* Chat : le champ prend toute la place, le « + » est dedans à droite, Envoyer est dehors. */
+.ai-form { flex-wrap: nowrap; align-items: flex-end; gap: 10px; }
+.ai-box { position: relative; flex: 1; min-width: 0; }
+.ai-box textarea { width: 100%; padding-right: 52px; }
+.ai-form .btn { flex: 0 0 auto; min-height: 46px; }
+.ai-plus { position: absolute; right: 8px; bottom: 7px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--bg); color: var(--brand); font-size: 22px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+.ai-plus:hover:not(:disabled) { background: var(--line); }
+.ai-plus:disabled { opacity: 0.5; cursor: default; }

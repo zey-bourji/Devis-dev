@@ -130,18 +130,33 @@ Ajoute un champ "flag" à ta réponse JSON :
 Quand "flag" n'est pas null : "ops" doit être [] et "reply" une seule phrase brève (elle sera remplacée par un message standard).
 Exemple de réponse refusée : {"reply":"Hors périmètre.","ops":[],"flag":"hors_sujet"}`;
 
-function extractJson(text: string) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    const m = text.match(/\{[\s\S]*\}/);
-    if (m) {
-      try {
-        return JSON.parse(m[0]);
-      } catch { /* continue */ }
-    }
-    return null;
+// L'IA met parfois de vrais retours à la ligne dans une phrase : le JSON devient invalide.
+// On les remplace par \n, seulement à l'intérieur des guillemets.
+function fixNewlines(text: string) {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+  for (const ch of text) {
+    if (inString && !escaped && ch === "\n") { out += "\\n"; continue; }
+    if (inString && !escaped && ch === "\r") continue;
+    if (inString && !escaped && ch === "\t") { out += " "; continue; }
+    out += ch;
+    if (escaped) escaped = false;
+    else if (ch === "\\") escaped = true;
+    else if (ch === '"') inString = !inString;
   }
+  return out;
+}
+
+function extractJson(text: string) {
+  const m = text.match(/\{[\s\S]*\}/);
+  for (const candidate of [text, m?.[0] ?? "", fixNewlines(m?.[0] ?? text)]) {
+    if (!candidate) continue;
+    try {
+      return JSON.parse(candidate);
+    } catch { /* on essaie la suite */ }
+  }
+  return null;
 }
 
 async function callModel(provider: string, key: string, messages: unknown[], withFormat: boolean) {

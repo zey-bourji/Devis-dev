@@ -241,6 +241,7 @@ export default function AiChat({ user, ready, hasSpecs, chatKey, initial, incomi
           send();
         }}
       >
+        <div className="ai-box">
         <textarea
           ref={area}
           rows={1}
@@ -259,9 +260,10 @@ export default function AiChat({ user, ready, hasSpecs, chatKey, initial, incomi
         {user && (
           <>
             <input ref={picker} type="file" hidden multiple accept="image/jpeg,image/png,image/webp,.pdf,.docx,.txt,.md,.csv" onChange={pick} />
-            <button type="button" className="btn btn-outline" disabled={busy || full} onClick={() => picker.current?.click()}>Joindre</button>
+            <button type="button" className="ai-plus" title="Joindre un fichier ou une photo" aria-label="Joindre un fichier ou une photo" disabled={busy || full} onClick={() => picker.current?.click()}>+</button>
           </>
         )}
+        </div>
         <button className="btn" disabled={busy || full || (!input.trim() && pending.length === 0)}>Envoyer</button>
       </form>
       {user && (
