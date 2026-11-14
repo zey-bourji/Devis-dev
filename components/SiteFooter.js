@@ -1,3 +1,4 @@
+import LogoMark from "./LogoMark";
 import Link from "next/link";
 import { SITE } from "../lib/site";
 
@@ -8,7 +9,7 @@ export default function SiteFooter() {
       <div className="footer-inner">
         <div className="footer-brand">
           <span className="logo">
-            <span className="logo-mark">{SITE.initial}</span> {SITE.name}
+            <LogoMark /> {SITE.name}
           </span>
           <p>Le générateur de devis des développeurs freelances, pensé en FCFA.</p>
         </div>

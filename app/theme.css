@@ -298,3 +298,5 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
 .receipt { padding: 10px 0; border-bottom: 1px dotted var(--line); }
 .receipt-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; align-items: end; }
 .receipt-buttons { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; }
+
+.logo-svg { display: inline-block; vertical-align: middle; margin-right: 4px; flex: none; }
