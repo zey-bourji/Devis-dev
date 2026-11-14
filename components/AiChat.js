@@ -11,6 +11,15 @@ export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay, onBudget 
   const [thinking, setThinking] = useState(false);
   const [playing, setPlaying] = useState(false);
   const box = useRef(null);
+  const area = useRef(null);
+
+  // Le champ grandit avec le texte : on voit tout ce qu'on écrit avant d'envoyer.
+  useEffect(() => {
+    const el = area.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 200) + "px";
+  }, [input]);
 
   // Le message de bienvenue dépend de la connexion.
   useEffect(() => {
@@ -152,10 +161,17 @@ export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay, onBudget 
           send();
         }}
       >
-        <input
-          type="text"
+        <textarea
+          ref={area}
+          rows={1}
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          }}
           placeholder="Ex : site pour un salon de coiffure, avec réservation..."
           disabled={busy}
           aria-label="Ton message à l'assistant"

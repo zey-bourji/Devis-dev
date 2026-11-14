@@ -1,4 +1,4 @@
-// Fonction Supabase « quote-chat » : l'assistant IA de YouQuote.
+// Fonction Supabase « quote-chat » : l'assistant IA de Youk.
 //
 // Le navigateur envoie le message, l'historique et l'état du devis. Cette fonction ajoute les consignes,
 // appelle l'IA (Gemini par défaut, Groq en secours) et renvoie { reply, ops } :
@@ -84,7 +84,7 @@ function allowed(userId: string) {
   return b.n <= 20;
 }
 
-const SYSTEM = `Tu es l'assistant de YouQuote, un générateur de devis en FCFA pour développeurs freelances en Afrique de l'Ouest (Abidjan).
+const SYSTEM = `Tu es l'assistant de Youk, un générateur de devis en FCFA pour développeurs freelances en Afrique de l'Ouest (Abidjan).
 Tu aides le développeur à construire son devis : tu coches des fonctionnalités, tu ajustes les prix, la remise, l'échéancier de paiement et le modèle de PDF. Tu parles à un développeur : tutoie-le, sois chaleureux et direct.
 
 Tu réponds UNIQUEMENT avec un objet JSON valide, sans texte autour : {"reply": "...", "ops": [ ... ], "budget": null, "flag": null}

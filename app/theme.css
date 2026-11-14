@@ -1,4 +1,4 @@
-/* Apparence de YouQuote : encre bleue de stylo sur papier gris froid.
+/* Apparence de Youk : encre bleue de stylo sur papier gris froid.
    Chargé après globals.css : ce fichier change les couleurs, la typographie et les formes.
    Idées directrices : tout est plat (traits fins au lieu d'ombres), les totaux sont écrits comme sur un reçu,
    les lignes de prix sont pointillées comme sur un carnet de devis. */
@@ -227,3 +227,6 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
 .cta h2 { font-size: clamp(30px, 5vw, 52px); letter-spacing: -0.03em; line-height: 1.02; max-width: 14ch; margin-bottom: 24px; }
 @media (max-width: 1080px) { .cta { margin-left: 16px; margin-right: 16px; } }
 @media (max-width: 560px) { .cta { padding: 40px 24px; border-radius: 26px; } }
+
+.ai-form { align-items: flex-end; }
+.ai-form textarea { flex: 1; min-width: 0; resize: none; overflow-y: auto; line-height: 1.4; min-height: 46px; max-height: 200px; font: inherit; font-size: 16px; padding: 11px 14px; }
