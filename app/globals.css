@@ -448,3 +448,4 @@ select {
 
 .ai-msg p { white-space: pre-line; }
 .ai-choices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.check-row { display: flex; align-items: center; gap: 8px; grid-column: 1 / -1; font-size: 15px; }

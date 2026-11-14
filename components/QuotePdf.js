@@ -71,7 +71,7 @@ function look(template, color) {
   };
 }
 
-export default function QuotePdf({ dev, client, quote, number, dateText, validUntilText, brand, payments = [] }) {
+export default function QuotePdf({ dev, client, quote, number, dateText, validUntilText, brand, payments = [], hideDays = false, deliveryText = "" }) {
   const template = brand.template || "classique";
   const color = brand.color;
   const v = look(template, color);
@@ -125,11 +125,12 @@ export default function QuotePdf({ dev, client, quote, number, dateText, validUn
           <Text style={s.boxLabel}>Client</Text>
           <Text style={s.bold}>{client.name || "Client"}</Text>
           {client.project ? <Text style={s.muted}>Projet : {client.project}</Text> : null}
+          {deliveryText ? <Text style={s.muted}>Livraison estimée : {deliveryText}</Text> : null}
         </View>
 
         <View style={[s.headRow, v.head]}>
           <Text style={s.colLabel}>Désignation</Text>
-          <Text style={s.colDays}>Jours</Text>
+          {hideDays ? null : <Text style={s.colDays}>Jours</Text>}
           <Text style={s.colPrice}>Montant</Text>
         </View>
         {groups.map((group) => (
@@ -141,7 +142,7 @@ export default function QuotePdf({ dev, client, quote, number, dateText, validUn
                   <Text>{line.label}</Text>
                   {line.note ? <Text style={s.note}>{line.note}</Text> : null}
                 </View>
-                <Text style={s.colDays}>{line.days ?? "-"}</Text>
+                {hideDays ? null : <Text style={s.colDays}>{line.days ?? "-"}</Text>}
                 <Text style={s.colPrice}>{formatFCFA(line.price)}</Text>
               </View>
             ))}

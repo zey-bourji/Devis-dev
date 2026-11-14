@@ -4,6 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { CATEGORIES, DEFAULT_DAILY_RATE } from "../lib/features";
 import { buildQuote, formatFCFA, itemPrice } from "../lib/pricing";
 import { planBudget } from "../lib/budget";
+
+// « entre le 20 novembre 2026 et le 5 décembre 2026 », « à partir du … », « au plus tard le … » ou rien
+const longDate = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+function deliveryText(c) {
+  if (c.deliveryFrom && c.deliveryTo) return `entre le ${longDate(c.deliveryFrom)} et le ${longDate(c.deliveryTo)}`;
+  if (c.deliveryTo) return `au plus tard le ${longDate(c.deliveryTo)}`;
+  if (c.deliveryFrom) return `à partir du ${longDate(c.deliveryFrom)}`;
+  return "";
+}
 import { addDays, formatDate, makeQuoteNumber } from "../lib/quote";
 import { useStoredState } from "../lib/useStoredState";
 import { DEFAULT_BRAND } from "../lib/brand";
@@ -360,6 +369,8 @@ export default function QuoteEditor() {
           payments={payments}
           dateText={formatDate(now)}
           validUntilText={formatDate(addDays(now, validity))}
+          hideDays={!!client.hideDays}
+          deliveryText={deliveryText(client)}
         />
       ).toBlob();
 
@@ -465,6 +476,18 @@ export default function QuoteEditor() {
                 value={validity}
                 onChange={(e) => setValidity(Number(e.target.value) || 1)}
               />
+            </label>
+            <label className="field">
+              Livraison estimée : à partir du
+              <input type="date" value={client.deliveryFrom || ""} onChange={(e) => setClient({ ...client, deliveryFrom: e.target.value })} />
+            </label>
+            <label className="field">
+              Livraison estimée : au plus tard le
+              <input type="date" value={client.deliveryTo || ""} onChange={(e) => setClient({ ...client, deliveryTo: e.target.value })} />
+            </label>
+            <label className="check-row">
+              <input type="checkbox" checked={!!client.hideDays} onChange={(e) => setClient({ ...client, hideDays: e.target.checked })} />
+              Ne pas montrer les jours au client (seulement les prix)
             </label>
           </div>
         </section>
