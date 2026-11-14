@@ -170,3 +170,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--brand); out
 .editor-side .card { background: var(--paper); }
 .empty-state { text-align: left; align-items: flex-start; padding: 28px 24px; }
 .empty-state h2 { font-size: 20px; }
+
+.flag-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px dotted #b9bdc7; flex-wrap: wrap; }
+.flag-actions { display: flex; gap: 8px; align-items: flex-start; }
+.flag-row .danger { color: #b3261e; border-color: #e7b4ae; }
