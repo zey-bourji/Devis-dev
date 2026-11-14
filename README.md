@@ -13,6 +13,13 @@ Le développeur coche les fonctionnalités d'un projet, le prix se calcule en FC
 - **Mon compte** : statistiques du mois, mot de passe, déconnexion, suppression du compte.
 - **Sans compte**, tout reste dans le navigateur. Avec un compte, les données sont enregistrées et privées (chaque utilisateur ne voit que ses lignes).
 
+## Tester (pour le jury)
+
+- Site en ligne : https://devis-dev.bourjizeinab17.workers.dev
+- Compte de démonstration : `demo@youquote.site` / `demo-deleted-account15`
+- Il contient 3 projets d'exemple (clients fictifs) : un devis envoyé, un accepté, un en cours avec paiements reçus.
+- Sans compte, l'éditeur de devis, l'assistant Youk et le PDF fonctionnent aussi, les données restent dans le navigateur.
+
 ## Comment c'est fait
 
 - Next.js (App Router), exporté en site statique (`out/`), React.
@@ -31,7 +38,7 @@ npm run build    # génère le site statique dans out/
 
 ## Mettre en place Supabase
 
-Dans le SQL Editor, exécuter dans l'ordre : `supabase/schema.sql`, `supabase/schema_ai.sql`, `supabase/schema_suivi.sql`.
+Dans le SQL Editor, exécuter dans l'ordre : `supabase/schema.sql`, `supabase/schema_ai.sql`, `supabase/schema_suivi.sql`, `supabase/schema_admin.sql`. Pour les données d'exemple : `supabase/demo_data.sql` (remplacer `DEMO_EMAIL`).
 Puis déployer les fonctions de `supabase/functions/` (voir le README de `quote-chat`) et ajouter les secrets `AI_API_KEY` et, si besoin, `AI_MODEL`.
 
 ## Structure
