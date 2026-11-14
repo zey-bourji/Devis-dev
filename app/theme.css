@@ -253,3 +253,13 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
 .ai-plus { position: absolute; right: 8px; bottom: 7px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--bg); color: var(--brand); font-size: 22px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
 .ai-plus:hover:not(:disabled) { background: var(--line); }
 .ai-plus:disabled { opacity: 0.5; cursor: default; }
+
+/* Chat : micro et « + » alignés en bas à droite du champ, sans barre de défilement parasite. */
+.ai-box textarea { padding-right: 92px; overflow-y: hidden; scrollbar-width: thin; }
+.ai-tools { position: absolute; right: 8px; bottom: 7px; display: flex; gap: 6px; }
+.ai-tool { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--bg); color: var(--brand); cursor: pointer; display: grid; place-items: center; padding: 0; }
+.ai-tool:hover:not(:disabled) { background: var(--line); }
+.ai-tool:disabled { opacity: 0.5; cursor: default; }
+.ai-tool.on { background: #d4351c; color: #fff; animation: ai-pulse 1.2s ease-in-out infinite; }
+@keyframes ai-pulse { 50% { box-shadow: 0 0 0 6px rgba(212, 53, 28, 0.18); } }
+@media (prefers-reduced-motion: reduce) { .ai-tool.on { animation: none; } }

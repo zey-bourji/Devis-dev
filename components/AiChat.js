@@ -18,6 +18,41 @@ export default function AiChat({ user, ready, hasSpecs, chatKey, initial, incomi
   const [pending, setPending] = useState([]); // les pièces jointes prêtes pour le prochain message
   const [attachError, setAttachError] = useState("");
   const [reading, setReading] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [canTalk, setCanTalk] = useState(false);
+  const recog = useRef(null);
+  const baseText = useRef("");
+
+  // La dictée vocale est celle du navigateur (Chrome, Edge, Safari) : gratuite, rien n'est envoyé chez nous.
+  useEffect(() => {
+    setCanTalk(!!(window.SpeechRecognition || window.webkitSpeechRecognition));
+    return () => recog.current?.stop();
+  }, []);
+
+  function toggleTalk() {
+    if (listening) { recog.current?.stop(); return; }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const r = new SR();
+    r.lang = "fr-FR";
+    r.continuous = true;
+    r.interimResults = true;
+    baseText.current = input.trim() ? input.trim() + " " : "";
+    r.onresult = (e) => {
+      let said = "";
+      for (let i = 0; i < e.results.length; i++) said += e.results[i][0].transcript;
+      setInput(baseText.current + said.trim());
+    };
+    r.onerror = (e) => {
+      setListening(false);
+      if (e.error === "not-allowed") setAttachError("Autorise le micro dans ton navigateur pour dicter.");
+    };
+    r.onend = () => setListening(false);
+    recog.current = r;
+    setAttachError("");
+    setListening(true);
+    r.start();
+  }
 
   // Le champ grandit avec le texte : on voit tout ce qu'on écrit avant d'envoyer.
   useEffect(() => {
@@ -25,6 +60,7 @@ export default function AiChat({ user, ready, hasSpecs, chatKey, initial, incomi
     if (!el) return;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 200) + "px";
+    el.style.overflowY = el.scrollHeight > 200 ? "auto" : "hidden";
   }, [input]);
 
   // Le message de bienvenue dépend de la connexion ; si le devis a déjà une conversation, on la remet dessous.
@@ -260,7 +296,16 @@ export default function AiChat({ user, ready, hasSpecs, chatKey, initial, incomi
         {user && (
           <>
             <input ref={picker} type="file" hidden multiple accept="image/jpeg,image/png,image/webp,.pdf,.docx,.txt,.md,.csv" onChange={pick} />
-            <button type="button" className="ai-plus" title="Joindre un fichier ou une photo" aria-label="Joindre un fichier ou une photo" disabled={busy || full} onClick={() => picker.current?.click()}>+</button>
+            <span className="ai-tools">
+              {canTalk && (
+                <button type="button" className={"ai-tool" + (listening ? " on" : "")} title={listening ? "Arrêter la dictée" : "Dicter à voix haute"} aria-label={listening ? "Arrêter la dictée" : "Dicter à voix haute"} disabled={busy || full} onClick={toggleTalk}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+                </button>
+              )}
+              <button type="button" className="ai-tool" title="Joindre un fichier ou une photo" aria-label="Joindre un fichier ou une photo" disabled={busy || full} onClick={() => picker.current?.click()}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+              </button>
+            </span>
           </>
         )}
         </div>
