@@ -75,5 +75,5 @@ grant execute on function public.admin_flags() to authenticated;
 grant execute on function public.admin_ban(uuid, integer) to authenticated;
 grant execute on function public.admin_unban(uuid) to authenticated;
 
--- ÉTAPE À PART, après ce qui précède : te déclarer administratrice (remplace par l'email de ton compte Youk).
+-- ÉTAPE À PART, après ce qui précède : te déclarer administratrice (remplace par l'email de ton compte Youquote).
 -- insert into public.admins (user_id) select id from auth.users where email = 'TON_EMAIL';

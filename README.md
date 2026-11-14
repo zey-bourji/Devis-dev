@@ -1,4 +1,4 @@
-# Youk
+# Youquote
 
 Générateur de devis en FCFA pour les développeurs freelances. Projet présenté au Systalink Challenge (Coupe d'Afrique des Développeurs 2026), réalisé en solo à Abidjan par Zeinab Bourji.
 

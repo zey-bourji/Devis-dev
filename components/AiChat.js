@@ -37,7 +37,7 @@ export default function AiChat({ user, ready, hasSpecs, chatKey, initial, onChan
         role: "assistant",
         welcome: true,
         text: user
-          ? "Salut ! Décris-moi le projet (ou colle le cahier des charges) et je remplis le devis pour toi. Tu peux aussi joindre un cahier des charges (PDF, Word) ou des photos."
+          ? "Salut, moi c'est Youk ! Décris-moi le projet (ou colle le cahier des charges) et je remplis le devis pour toi. Tu peux aussi joindre un cahier des charges (PDF, Word) ou des photos."
           : "Salut ! Je suis en mode essai : je repère des mots-clés (« paiement Wave », « 10 % de remise », « en 3 fois »). Connecte-toi pour débloquer l'assistant IA complet.",
         steps: [],
       },
@@ -164,7 +164,7 @@ export default function AiChat({ user, ready, hasSpecs, chatKey, initial, onChan
       <div className="ai-head">
         <span className="ai-spark" aria-hidden="true">IA</span>
         <div>
-          <h2>Assistant</h2>
+          <h2>Youk</h2>
           <small className="muted">{user ? "IA : dis-lui ce que tu veux, le devis se remplit." : "Mode essai, sans IA"}</small>
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function AiChat({ user, ready, hasSpecs, chatKey, initial, onChan
           }}
           placeholder="Ex : site pour un salon de coiffure, avec réservation..."
           disabled={busy || full}
-          aria-label="Ton message à l'assistant"
+          aria-label="Ton message à Youk"
         />
         {user && (
           <>
