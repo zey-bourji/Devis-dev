@@ -238,3 +238,9 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
 .ai-pending button { border: 0; background: #fff; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; line-height: 1; }
 .ai-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
 .ai-foot .muted { margin: 0; }
+
+/* Chat : le champ prend toute la largeur, les boutons passent dessous (visibles aussi sur téléphone). */
+.ai-form { flex-wrap: wrap; align-items: stretch; }
+.ai-form textarea { flex: 1 1 100%; }
+.ai-form .btn { flex: 1 1 0; }
+.ai-form .btn-outline { flex: 1 1 0; }
