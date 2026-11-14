@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CATEGORIES, DEFAULT_DAILY_RATE } from "../lib/features";
 import { buildQuote, formatFCFA, itemPrice } from "../lib/pricing";
+import { planBudget } from "../lib/budget";
 import { addDays, formatDate, makeQuoteNumber } from "../lib/quote";
 import { useStoredState } from "../lib/useStoredState";
 import { DEFAULT_BRAND } from "../lib/brand";
@@ -330,6 +331,9 @@ export default function QuoteEditor() {
     },
     specs: specs.slice(0, 6000),
   };
+  const budgetRef = useRef({});
+  budgetRef.current = { selected, rate, options: { customLines, discountPercent, discountAmount, notes, overrides } };
+  const checkBudget = (budget) => planBudget({ ...budgetRef.current, budget });
   const askAi = (message, history) => askAssistant({ message, history, context: aiContext, user });
 
   const text = shareText({ dev, client, quote: finalQuote, number });
@@ -375,7 +379,7 @@ export default function QuoteEditor() {
       <div className="editor-main">
         <h1 className="page-title">Nouveau devis</h1>
 
-        <AiChat user={user} ready={ready} hasSpecs={!!specs.trim()} onAsk={askAi} onPlay={playOps} />
+        <AiChat user={user} ready={ready} hasSpecs={!!specs.trim()} onAsk={askAi} onPlay={playOps} onBudget={checkBudget} />
 
         <section className="card">
           <h2>Toi</h2>

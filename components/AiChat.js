@@ -5,7 +5,7 @@ import { describeOp } from "../lib/aiOps";
 
 // La fenêtre de chat de l'assistant. Elle ne connaît pas le devis :
 // elle envoie le message (onAsk), puis rejoue les actions une par une (onPlay) pour que le devis se remplisse sous les yeux.
-export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay }) {
+export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay, onBudget }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -57,6 +57,35 @@ export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay }) {
       });
       setPlaying(false);
     }
+
+    // Un budget a été donné : si le devis le dépasse, on propose deux options à choisir.
+    if (res.budget && onBudget) {
+      await new Promise((r) => setTimeout(r, 500)); // le temps que le devis se mette à jour
+      const plan = onBudget(res.budget);
+      if (plan) {
+        setMessages((m) => [...m, { role: "assistant", text: plan.text, steps: [], choices: [plan.optionA, plan.optionB], chosen: null }]);
+      }
+    }
+  }
+
+  async function choose(msgIndex, choiceIndex) {
+    if (busy) return;
+    const msg = messages[msgIndex];
+    if (!msg || msg.chosen !== null) return;
+    const choice = msg.choices[choiceIndex];
+    let index;
+    setMessages((m) => {
+      const next = m.map((x, i) => (i === msgIndex ? { ...x, chosen: choiceIndex } : x));
+      index = next.length;
+      return [...next, { role: "assistant", text: choice.ops?.length ? "C'est fait, j'ajuste le devis." : "D'accord, je garde tout. Le total dépasse le budget : tu peux fixer le prix convenu plus bas.", steps: [] }];
+    });
+    if (choice.ops?.length) {
+      setPlaying(true);
+      await onPlay(choice.ops, (op) => {
+        setMessages((m) => m.map((x, i) => (i === index ? { ...x, steps: [...x.steps, describeOp(op)] } : x)));
+      });
+      setPlaying(false);
+    }
   }
 
   const suggestions = [
@@ -86,6 +115,15 @@ export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay }) {
                   <li key={j}>✓ {s}</li>
                 ))}
               </ul>
+            )}
+            {m.choices && (
+              <div className="ai-choices">
+                {m.choices.map((c, k) => (
+                  <button type="button" key={k} className={"chip" + (m.chosen === k ? " chip-on" : "")} disabled={busy || m.chosen !== null} onClick={() => choose(i, k)}>
+                    {c.label}
+                  </button>
+                ))}
+              </div>
             )}
             {m.warn && <small className="ai-warn">{m.warn} J'ai utilisé le mode simple.</small>}
           </div>

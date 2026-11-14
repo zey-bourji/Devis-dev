@@ -445,3 +445,6 @@ select {
   .nav .nav-link, .nav .link-btn { font-size: .85rem; }
   .nav .btn-small { padding: .4rem .6rem; font-size: .85rem; white-space: nowrap; }
 }
+
+.ai-msg p { white-space: pre-line; }
+.ai-choices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
