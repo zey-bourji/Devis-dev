@@ -6,7 +6,7 @@ import { LIMITS, readAttachment } from "../lib/attachments";
 
 // La fenêtre de chat de l'assistant. Elle ne connaît pas le devis :
 // elle envoie le message (onAsk), puis rejoue les actions une par une (onPlay) pour que le devis se remplisse sous les yeux.
-export default function AiChat({ user, ready, hasSpecs, chatKey, initial, onChange, onAsk, onPlay, onBudget }) {
+export default function AiChat({ user, ready, hasSpecs, chatKey, initial, incoming, onChange, onAsk, onPlay, onBudget }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -44,6 +44,17 @@ export default function AiChat({ user, ready, hasSpecs, chatKey, initial, onChan
       ...(Array.isArray(initial) ? initial : []),
     ]);
   }, [ready, !!user, chatKey]);
+
+  // Des photos arrivent depuis la carte « cahier des charges » : on les met dans les pièces prêtes à envoyer.
+  useEffect(() => {
+    if (!incoming?.items?.length) return;
+    setAttachError("");
+    setPending((p) => {
+      const room = Math.max(0, LIMITS.photos - sentFiles.filter((a) => a.kind === "photo").length - p.filter((a) => a.kind === "photo").length);
+      if (incoming.items.length > room) setAttachError(`Seules ${room} photo(s) sur ${incoming.items.length} ont pu être ajoutées (maximum ${LIMITS.photos} par conversation).`);
+      return [...p, ...incoming.items.slice(0, room)];
+    });
+  }, [incoming?.id]);
 
   // Sauvegarde de la conversation chez le parent (sans les fichiers, seulement leurs noms).
   function persist(next) {

@@ -24,6 +24,7 @@ import { useUser } from "../lib/useUser";
 import { askAssistant } from "../lib/assistant";
 import { DEFAULT_DATES, effectiveTotal, paymentSummary } from "../lib/tracking";
 import AiChat from "./AiChat";
+import { readAttachment } from "../lib/attachments";
 import TrackingCard from "./TrackingCard";
 import BrandingCard from "./BrandingCard";
 import Summary from "./Summary";
@@ -41,6 +42,10 @@ export default function QuoteEditor() {
   const [paid, setPaid] = useState({});                   // paiements reçus : { numéroÉchéance: { date, proof } }
   const [dates, setDates] = useState(DEFAULT_DATES);      // début, livraison, report
   const [cancelReason, setCancelReason] = useState("");
+  const [incoming, setIncoming] = useState(null);     // photos envoyées vers le chat depuis la carte « cahier des charges »
+  const [specsNote, setSpecsNote] = useState({ text: "", error: false });
+  const [reading, setReading] = useState(false);
+  const specsPicker = useRef(null);
   const [chat, setChat] = useState([]);                 // la conversation avec l'assistant, gardée dans le devis
   const [dirty, setDirty] = useState(false);              // le suivi a changé : on enregistre tout seul
   const [client, setClient] = useState({ name: "", project: "" });
@@ -341,6 +346,40 @@ export default function QuoteEditor() {
   const budgetRef = useRef({});
   budgetRef.current = { selected, rate, options: { customLines, discountPercent, discountAmount, notes, overrides } };
   const checkBudget = (budget) => planBudget({ ...budgetRef.current, budget });
+  // Insère un fichier dans le cahier des charges : un document devient du texte, une photo part dans le chat de Youk.
+  async function insertFiles(e) {
+    const files = [...e.target.files];
+    e.target.value = "";
+    if (!files.length) return;
+    setSpecsNote({ text: "", error: false });
+    setReading(true);
+    const photos = [];
+    const notes = [];
+    let errorText = "";
+    for (const f of files) {
+      try {
+        const a = await readAttachment(f, []);
+        if (a.kind === "photo") { photos.push(a); continue; }
+        setSpecs((s) => (s.trim() ? s.trim() + "\n\n" : "") + a.text);
+        setSuggestions(null);
+        notes.push(`« ${a.name} » inséré dans le cahier des charges.`);
+        if (a.cut) notes.push("Le document est long : seul le début a été gardé.");
+      } catch (err) {
+        errorText = err.message || "Fichier illisible.";
+      }
+    }
+    if (photos.length) {
+      if (user) {
+        setIncoming({ id: Date.now(), items: photos });
+        notes.push(`${photos.length} photo(s) ajoutée(s) dans le chat de Youk : écris-lui ce que tu veux, ou envoie directement.`);
+      } else {
+        errorText = errorText || "Connecte-toi pour que Youk lise tes photos.";
+      }
+    }
+    setSpecsNote({ text: errorText || notes.join(" "), error: !!errorText });
+    setReading(false);
+  }
+
   const onChat = (messages) => { setChat(messages); if (quoteId) mark(); };
   const askAi = (message, history, attachments) => askAssistant({ message, history, context: aiContext, user, attachments });
 
@@ -388,7 +427,7 @@ export default function QuoteEditor() {
       <div className="editor-main">
         <h1 className="page-title">Nouveau devis</h1>
 
-        <AiChat user={user} ready={ready} hasSpecs={!!specs.trim()} chatKey={quoteId || "new"} initial={chat} onChange={onChat} onAsk={askAi} onPlay={playOps} onBudget={checkBudget} />
+        <AiChat user={user} ready={ready} hasSpecs={!!specs.trim()} chatKey={quoteId || "new"} initial={chat} incoming={incoming} onChange={onChat} onAsk={askAi} onPlay={playOps} onBudget={checkBudget} />
 
         <section className="card">
           <h2>Toi</h2>
@@ -427,6 +466,11 @@ export default function QuoteEditor() {
           <h2>Cahier des charges (facultatif)</h2>
           <p className="muted">Colle le cahier des charges : je repère les fonctionnalités et je les pré-coche. Ce sont des suggestions, à toi de vérifier.</p>
           <textarea rows="5" value={specs} onChange={(e) => setSpecs(e.target.value)} placeholder="Ex : un site avec inscription des utilisateurs, paiement par Wave, un espace admin..." />
+          <input ref={specsPicker} type="file" hidden multiple accept="image/jpeg,image/png,image/webp,.pdf,.docx,.txt,.md,.csv" onChange={insertFiles} />
+          <button type="button" className="btn btn-outline btn-small" onClick={() => specsPicker.current?.click()} disabled={reading}>
+            {reading ? "Lecture..." : "Insérer un fichier ou des photos"}
+          </button>
+          {specsNote.text && <p className={specsNote.error ? "error" : "muted"}>{specsNote.text}</p>}
           <button type="button" className="btn btn-outline btn-small" onClick={runAnalysis} disabled={!specs.trim()}>
             Analyser et pré-cocher
           </button>
