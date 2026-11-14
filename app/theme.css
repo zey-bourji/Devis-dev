@@ -1,0 +1,142 @@
+/* Apparence de YouQuote : encre bleue de stylo sur papier gris froid.
+   Chargé après globals.css : ce fichier change les couleurs, la typographie et les formes.
+   Idées directrices : tout est plat (traits fins au lieu d'ombres), les totaux sont écrits comme sur un reçu,
+   les lignes de prix sont pointillées comme sur un carnet de devis. */
+
+:root {
+  --brand: #1b3fa8;
+  --brand-dark: #122d7e;
+  --bg: #f1f2f4;
+  --ink: #14171c;
+  --muted: #565d6b;
+  --line: #d9dce2;
+  --paper: #ffffff;
+  --font-body: "Instrument Sans Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Bricolage Grotesque Variable", "Instrument Sans Variable", system-ui, sans-serif;
+}
+
+body { font-family: var(--font-body); font-variant-numeric: tabular-nums; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, .logo, .page-title { font-family: var(--font-head); letter-spacing: -0.015em; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Boutons : rectangles nets, pas de rebond */
+.btn { border-radius: 6px; font-weight: 600; padding: 11px 18px; letter-spacing: 0; transition: background 0.15s, border-color 0.15s; }
+.btn:hover { transform: none; box-shadow: none; }
+.btn-outline { background: var(--paper); color: var(--ink); border-color: #b9bdc7; }
+.btn-outline:hover { background: var(--bg); border-color: var(--ink); }
+.btn-light { background: var(--paper); color: var(--ink); border-color: #b9bdc7; }
+.btn-light:hover { background: var(--bg); }
+.link-btn { color: var(--muted); }
+
+/* En-tête */
+.site-header { background: var(--bg); border-bottom: 1px solid var(--line); }
+.logo { font-weight: 700; font-size: 19px; }
+.logo-mark { border-radius: 5px; width: 26px; height: 26px; font-size: 15px; font-weight: 700; }
+.nav-link { color: var(--ink); font-weight: 500; }
+
+/* Cartes : un trait fin, pas d'ombre */
+.card { border-radius: 8px; border: 1px solid var(--line); box-shadow: none; padding: 20px; }
+.card h2 { font-size: 17px; font-weight: 600; color: var(--ink); margin-bottom: 12px; }
+.page-title { font-size: 28px; font-weight: 700; }
+
+/* Champs */
+input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="number"], input:not([type]), textarea, select {
+  border-radius: 6px; border-color: #c2c6cf;
+}
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--brand); outline-offset: 0; border-color: var(--brand); }
+.field { font-weight: 500; }
+
+/* Les lignes de prix : pointillés de carnet */
+.item-wrap { border-top: 1px dotted #b9bdc7; }
+.summary-lines li, .demo-lines li, .plan-preview li, .sheet-row { border-bottom: 1px dotted #b9bdc7; border-top: 0; }
+.quote-row, .pay-row, .plan-preview li { border-top-style: dotted; border-top-color: #b9bdc7; }
+.item-price, .summary-lines b { font-weight: 600; }
+
+/* Les totaux, écrits comme sur un reçu */
+.summary-total, .demo-total, .sheet-total {
+  background: transparent; color: var(--ink); border-radius: 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink);
+  padding: 12px 0; margin: 12px 0 16px;
+}
+.summary-total strong, .demo-total strong { font-family: var(--font-head); font-size: 24px; font-weight: 700; }
+.sheet-total { font-weight: 700; margin-top: 10px; padding: 8px 0; }
+.mini-total { border-top: 2px solid var(--ink); }
+.mini-total strong { color: var(--ink); font-family: var(--font-head); font-size: 26px; }
+.total-bar { background: var(--paper); color: var(--ink); border-top: 2px solid var(--ink); }
+.total-bar small { opacity: 1; color: var(--muted); }
+.total-bar .btn { background: var(--brand); color: #fff; }
+.summary-total strong, .total-bar strong, .mini-total strong { animation: none; }
+
+/* Accueil */
+.hero { background: var(--bg); color: var(--ink); padding: 64px 16px 72px; border-bottom: 1px solid var(--line); }
+.hero-grid { gap: 56px; }
+@media (max-width: 880px) { .hero-grid { text-align: left; } .hero-actions { justify-content: flex-start; } .hero-sub { margin-left: 0; margin-right: 0; } }
+.hero h1 { font-size: clamp(32px, 5.4vw, 54px); line-height: 1.05; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 18px; }
+.hero-sub { color: var(--muted); font-size: 18px; }
+.demo { border-radius: 8px; border: 1px solid var(--line); box-shadow: 0 1px 0 var(--line), 0 18px 40px -24px rgba(20, 23, 28, 0.35); }
+.demo-bar i { background: #d3d6dd; }
+.demo-input, .sheet-client { border-radius: 6px; }
+.sheet-client { background: var(--bg); }
+.demo-sheet { border-radius: 8px 8px 0 0; box-shadow: 0 -10px 30px rgba(20, 23, 28, 0.15); border-top-color: var(--ink); }
+.sheet-head { color: var(--ink); }
+.demo-btn { border-radius: 6px; border-color: var(--brand); }
+.demo-toast { background: #1d6b45; border-radius: 6px; }
+
+.section { max-width: 1080px; padding: 64px 16px 8px; }
+.section-title { text-align: left; font-size: clamp(26px, 3.4vw, 34px); font-weight: 700; margin-bottom: 8px; }
+.section-sub { text-align: left; margin: 0 0 24px; font-size: 17px; }
+.mini { margin: 0; max-width: 560px; }
+
+.steps { gap: 28px; }
+.steps .card, .steps .feature {
+  background: transparent; border: 0; border-top: 2px solid var(--ink); border-radius: 0; padding: 16px 0 0; box-shadow: none; transform: none;
+}
+.steps .card:hover { transform: none; box-shadow: none; }
+.step-n { background: none; width: auto; height: auto; border-radius: 0; color: var(--brand); font-family: var(--font-head); font-size: 28px; font-weight: 700; }
+.steps h3 { font-size: 19px; font-weight: 600; margin: 4px 0 8px; }
+.steps p { font-size: 16px; }
+.cta { text-align: left; max-width: 1080px; margin: 56px auto 0; padding: 40px 16px 56px; border-top: 1px solid var(--line); }
+.cta h2 { font-size: clamp(24px, 3vw, 30px); font-weight: 700; }
+
+/* Onglets : un soulignement, pas de pilule */
+.tabs { background: transparent; border-radius: 0; border-bottom: 1px solid var(--line); padding: 0; gap: 22px; }
+.tab { flex: 0 0 auto; border-radius: 0; padding: 10px 2px; font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab.on { background: transparent; box-shadow: none; color: var(--ink); border-bottom-color: var(--ink); }
+.tab-count { background: var(--bg); border-radius: 4px; }
+
+/* Pastilles et états */
+.chip { background: var(--paper); color: var(--ink); border: 1px solid #b9bdc7; border-radius: 6px; font-weight: 500; }
+.chip:hover { border-color: var(--ink); }
+.chip-on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.badge { background: var(--bg); color: var(--ink); border-radius: 4px; font-weight: 600; }
+[class^="status-"], [class*=" status-"] { border-radius: 4px; }
+.pay-toggle { border-radius: 6px; color: var(--ink); border-color: #b9bdc7; font-weight: 500; }
+.stepper button, .icon-btn { border-radius: 6px; color: var(--ink); }
+.template { border-radius: 8px; }
+.template.active { box-shadow: 0 0 0 1px var(--brand); }
+.swatch { box-shadow: 0 0 0 1px #b9bdc7; }
+
+/* Assistant */
+.ai-card { background: var(--paper); border: 1px solid var(--line); }
+.ai-spark { border-radius: 6px; }
+.ai-msg { border-radius: 8px; animation: none; }
+.ai-msg.assistant { background: var(--bg); border-bottom-left-radius: 8px; }
+.ai-msg.user { background: var(--brand); border-bottom-right-radius: 8px; }
+.ai-steps { color: var(--brand-dark); }
+.ai-steps li { animation: none; }
+
+/* Suivi, compte */
+.stat { background: var(--bg); border-radius: 6px; }
+.stat b { font-family: var(--font-head); }
+.bar-col i { background: var(--brand); border-radius: 2px 2px 0 0; }
+.progress { border-radius: 4px; }
+.progress i { border-radius: 4px; }
+.danger-zone { border-color: #e7b4ae; }
+
+.site-footer { background: transparent; border-top: 1px solid var(--line); margin-top: 56px; }
+.footer-links { color: var(--ink); font-weight: 500; }
+.footer-note { border-top-style: dotted; }
+
+/* Le mouvement : on garde seulement ce qui répond à une action */
+.reveal, .reveal.in { opacity: 1; transform: none; transition: none; }
+.hero-grid { padding: 0 16px; }
+.ai-spark { font-family: var(--font-head); font-size: 14px; font-weight: 700; width: 36px; height: 36px; }

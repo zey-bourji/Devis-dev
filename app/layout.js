@@ -1,4 +1,7 @@
+import "@fontsource-variable/bricolage-grotesque";
+import "@fontsource-variable/instrument-sans";
 import "./globals.css";
+import "./theme.css";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import { SITE } from "../lib/site";
