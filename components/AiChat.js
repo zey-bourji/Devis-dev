@@ -98,7 +98,7 @@ export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay, onBudget 
   return (
     <section className="card ai-card">
       <div className="ai-head">
-        <span className="ai-spark" aria-hidden="true">✦</span>
+        <span className="ai-spark" aria-hidden="true">IA</span>
         <div>
           <h2>Assistant</h2>
           <small className="muted">{user ? "IA : dis-lui ce que tu veux, le devis se remplit." : "Mode essai, sans IA"}</small>
