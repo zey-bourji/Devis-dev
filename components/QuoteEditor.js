@@ -22,7 +22,8 @@ import { analyzeSpecs } from "../lib/analyze";
 import { supabase } from "../lib/supabase";
 import { useUser } from "../lib/useUser";
 import { askAssistant } from "../lib/assistant";
-import { DEFAULT_DATES, effectiveTotal, paymentSummary } from "../lib/tracking";
+import { DEFAULT_DATES, effectiveTotal } from "../lib/tracking";
+import { allocate, paymentSummary, receiptsFrom } from "../lib/payments";
 import AiChat from "./AiChat";
 import { readAttachment } from "../lib/attachments";
 import TrackingCard from "./TrackingCard";
@@ -39,7 +40,7 @@ export default function QuoteEditor() {
   const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE); // comment le client paie (acompte, versements...)
   const [overrides, setOverrides] = useState({});         // jours / prix modifiés ligne par ligne
   const [agreedTotal, setAgreedTotal] = useState(null);   // total convenu avec le client (vide = total estimé)
-  const [paid, setPaid] = useState({});                   // paiements reçus : { numéroÉchéance: { date, proof } }
+  const [receipts, setReceipts] = useState([]);             // paiements reçus, saisis librement : [{ id, amount, date, note, proof }]
   const [dates, setDates] = useState(DEFAULT_DATES);      // début, livraison, report
   const [cancelReason, setCancelReason] = useState("");
   const [incoming, setIncoming] = useState(null);     // photos envoyées vers le chat depuis la carte « cahier des charges »
@@ -169,7 +170,7 @@ export default function QuoteEditor() {
         setOverrides(d.overrides || {});
         setSchedule({ ...DEFAULT_SCHEDULE, ...(d.schedule || {}) });
         setAgreedTotal(d.agreedTotal ?? null);
-        setPaid(d.paid || {});
+        setReceipts(receiptsFrom(d, data.total));
         setDates({ ...DEFAULT_DATES, ...(d.dates || {}) });
         setCancelReason(d.cancelReason || "");
         setChat(Array.isArray(d.chat) ? d.chat : []);
@@ -206,7 +207,7 @@ export default function QuoteEditor() {
       status,
       total,
       updated_at: new Date().toISOString(),
-      data: { selected: [...selected], notes, customLines, discountPercent, discountAmount, overrides, schedule, agreedTotal, paid, dates, cancelReason, chat, client, specs, dailyRate: rate },
+      data: { selected: [...selected], notes, customLines, discountPercent, discountAmount, overrides, schedule, agreedTotal, receipts, dates, cancelReason, chat, client, specs, dailyRate: rate },
     };
     let error;
     if (quoteId) {
@@ -281,7 +282,8 @@ export default function QuoteEditor() {
   const total = effectiveTotal(quote.total, agreedTotal);
   const finalQuote = { ...quote, estimated: quote.total, total, adjustment: total - quote.total };
   const payments = buildSchedule(total, schedule);
-  const tracking = paymentSummary(payments, paid, total);
+  const allocation = allocate(payments, receipts);
+  const tracking = paymentSummary(allocation.received, total);
 
   // Le suivi (statut, paiements, dates) s'enregistre tout seul, un instant après chaque changement.
   const mark = () => setDirty(true);
@@ -290,7 +292,7 @@ export default function QuoteEditor() {
     if (!dirty || !quoteId || !user) return;
     const timer = setTimeout(() => saveQuote(true), 900);
     return () => clearTimeout(timer);
-  }, [dirty, paid, agreedTotal, dates, cancelReason, status, chat]);
+  }, [dirty, receipts, agreedTotal, dates, cancelReason, status, chat]);
 
   // --- L'assistant : applique les actions demandées par le chat, une par une ---
   // On garde la fonction à jour dans une "ref" : les actions arrivent avec des pauses,
@@ -726,9 +728,9 @@ export default function QuoteEditor() {
             quoteId={quoteId}
             status={status}
             total={total}
-            payments={payments}
-            paid={paid}
-            setPaid={(v) => { setPaid(v); mark(); }}
+            allocation={allocation}
+            receipts={receipts}
+            setReceipts={(v) => { setReceipts(v); mark(); }}
             dates={dates}
             setDates={(v) => { setDates(v); mark(); }}
             cancelReason={cancelReason}

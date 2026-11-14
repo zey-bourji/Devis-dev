@@ -293,3 +293,8 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
 .pw-wrap input { width: 100%; padding-right: 48px; }
 .pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border: 0; background: transparent; color: var(--muted); border-radius: 50%; cursor: pointer; display: grid; place-items: center; }
 .pw-eye:hover { background: var(--bg); color: var(--ink); }
+
+/* Paiements reçus : une ligne par versement, un petit formulaire pour en ajouter. */
+.receipt { padding: 10px 0; border-bottom: 1px dotted var(--line); }
+.receipt-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; align-items: end; }
+.receipt-buttons { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; }
