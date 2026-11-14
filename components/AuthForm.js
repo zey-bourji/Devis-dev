@@ -25,6 +25,7 @@ export default function AuthForm() {
   const [mode, setMode] = useState("login"); // "login" ou "signup"
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accepted, setAccepted] = useState(false);
@@ -94,14 +95,23 @@ export default function AuthForm() {
         </label>
         <label className="field">
           Mot de passe
+          <span className="pw-wrap">
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             required
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete={mode === "login" ? "current-password" : "new-password"}
           />
+          <button type="button" className="pw-eye" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Cacher le mot de passe" : "Voir le mot de passe"} title={showPassword ? "Cacher" : "Voir"}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+              <circle cx="12" cy="12" r="3" />
+              {showPassword && <path d="M4 4l16 16" />}
+            </svg>
+          </button>
+          </span>
         </label>
 
         {mode === "signup" && (

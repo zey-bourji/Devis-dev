@@ -287,3 +287,9 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
 @media (min-width: 1100px) { .admin-layout { margin-inline: calc((100% - 1040px) / 2); } }
 
 .admin-title { grid-column: 1 / -1; margin-bottom: 0; }
+
+/* Champ mot de passe avec l'œil pour voir ce qu'on tape. */
+.pw-wrap { position: relative; display: block; }
+.pw-wrap input { width: 100%; padding-right: 48px; }
+.pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border: 0; background: transparent; color: var(--muted); border-radius: 50%; cursor: pointer; display: grid; place-items: center; }
+.pw-eye:hover { background: var(--bg); color: var(--ink); }
