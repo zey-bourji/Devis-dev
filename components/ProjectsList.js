@@ -6,6 +6,8 @@ import { supabase } from "../lib/supabase";
 import { useUser } from "../lib/useUser";
 import { formatFCFA } from "../lib/pricing";
 import { statusClass } from "../lib/tracking";
+import { upcomingPayments } from "../lib/reminders";
+import { describeDays } from "../lib/schedule";
 
 // Les filtres de la liste des devis. « En cours » = acceptés ou en cours ; « Annulés » = annulés ou refusés.
 const FILTERS = [
@@ -42,7 +44,7 @@ export default function ProjectsList() {
       });
     supabase
       .from("quotes")
-      .select("id, number, status, total, updated_at, project_id, data")
+      .select("id, number, status, total, created_at, updated_at, project_id, data")
       .order("updated_at", { ascending: false })
       .then(({ data }) => setQuotes(data || []));
   }, [user]);
@@ -75,6 +77,7 @@ export default function ProjectsList() {
   const count = (f) => (f.match ? allQuotes.filter((q) => f.match.includes(q.status)).length : allQuotes.length);
   const active = FILTERS.find((f) => f.id === filter);
   const shownQuotes = active.match ? allQuotes.filter((q) => active.match.includes(q.status)) : allQuotes;
+  const due = upcomingPayments(allQuotes);
   const projectName = (id) => list.find((p) => p.id === id)?.name;
 
   return (
@@ -86,6 +89,24 @@ export default function ProjectsList() {
         </button>
       </div>
       {error && <p className="error">{error}</p>}
+
+      {due.length > 0 && (
+        <section className="card due-banner">
+          <h2>Paiements à suivre</h2>
+          {due.map((p, i) => (
+            <Link href={`/devis/?quote=${p.quoteId}`} className="due-row" key={i}>
+              <span>
+                <strong>{p.client || p.number}</strong>
+                <small className="muted block">{p.label}</small>
+              </span>
+              <span className="due-right">
+                <b>{formatFCFA(p.amount)}</b>
+                <small className={p.days < 0 ? "late" : "soon"}>{describeDays(p.days)}</small>
+              </span>
+            </Link>
+          ))}
+        </section>
+      )}
 
       <div className="tabs" role="tablist">
         <button type="button" role="tab" aria-selected={view === "projets"} className={"tab" + (view === "projets" ? " on" : "")} onClick={() => setView("projets")}>

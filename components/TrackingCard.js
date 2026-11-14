@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatFCFA } from "../lib/pricing";
 import { paymentSummary } from "../lib/tracking";
+import { daysUntil, describeDays, dueDateFor } from "../lib/schedule";
 import { proofUrl, removeProof, uploadProof } from "../lib/proofs";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -75,12 +76,19 @@ export default function TrackingCard({ user, quoteId, status, total, payments, p
 
           {payments.map((p, i) => {
             const entry = paid[i];
+            const due = dueDateFor(p, dates);
+            const days = due ? daysUntil(due) : null;
             return (
               <div className={"pay-row" + (entry ? " is-paid" : "")} key={i}>
                 <div className="pay-main">
                   <span>{p.label}</span>
                   <b>{formatFCFA(p.amount)}</b>
                 </div>
+                {due && !entry && (
+                  <small className={"due" + (days < 0 ? " late" : days <= 7 ? " soon" : "")}>
+                    À encaisser le {due.toLocaleDateString("fr-FR")} · {describeDays(days)}
+                  </small>
+                )}
                 <div className="pay-actions">
                   <button type="button" className={"pay-toggle" + (entry ? " on" : "")} onClick={() => togglePaid(i)}>
                     {entry ? "✓ Payé" : "Marquer comme payé"}
@@ -129,6 +137,11 @@ export default function TrackingCard({ user, quoteId, status, total, payments, p
 
       <h3 className="sub-title">Dates</h3>
       <div className="grid">
+        <label className="field">
+          Date de la commande
+          <input type="date" value={dates.order || ""} onChange={(e) => setDates({ ...dates, order: e.target.value })} />
+          <small className="muted">Sert à calculer les dates des paiements.</small>
+        </label>
         <label className="field">
           Début du projet
           <input type="date" value={dates.start} onChange={(e) => setDates({ ...dates, start: e.target.value })} />

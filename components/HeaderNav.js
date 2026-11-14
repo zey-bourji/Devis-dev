@@ -21,6 +21,7 @@ export default function HeaderNav() {
         <>
           <Link href="/projets/" className="nav-link">Mes projets</Link>
           <Link href="/devis/" className="btn btn-small">Nouveau devis</Link>
+          <Link href="/compte/" className="nav-link">Mon compte</Link>
           <button type="button" className="link-btn" onClick={logout}>Déconnexion</button>
         </>
       ) : (
