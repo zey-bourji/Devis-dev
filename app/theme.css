@@ -263,3 +263,27 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
 .ai-tool.on { background: #d4351c; color: #fff; animation: ai-pulse 1.2s ease-in-out infinite; }
 @keyframes ai-pulse { 50% { box-shadow: 0 0 0 6px rgba(212, 53, 28, 0.18); } }
 @media (prefers-reduced-motion: reduce) { .ai-tool.on { animation: none; } }
+
+/* Admin : menu à gauche, contenu à droite ; sur téléphone le menu passe au-dessus. */
+.admin-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; align-items: start; }
+.admin-nav { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 4px; }
+.admin-nav button { text-align: left; border: 0; background: transparent; padding: 10px 14px; border-radius: 12px; font: inherit; color: var(--muted); cursor: pointer; }
+.admin-nav button:hover { background: #fff; color: var(--ink); }
+.admin-nav button.on { background: #fff; color: var(--brand); font-weight: 600; box-shadow: 0 1px 0 var(--line); }
+.admin-main { min-width: 0; }
+.admin-tools { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.admin-tools input { flex: 1 1 220px; }
+.table-wrap { overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.admin-table th { text-align: left; font-weight: 600; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.admin-table td { padding: 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+@media (max-width: 760px) {
+  .admin-layout { grid-template-columns: 1fr; gap: 12px; }
+  .admin-nav { position: static; flex-direction: row; overflow-x: auto; }
+  .admin-nav button { white-space: nowrap; }
+}
+
+/* Admin : plus large que les autres pages sur grand écran, pour que le tableau tienne sans défiler. */
+@media (min-width: 1100px) { .admin-layout { margin-inline: calc((100% - 1040px) / 2); } }
+
+.admin-title { grid-column: 1 / -1; margin-bottom: 0; }

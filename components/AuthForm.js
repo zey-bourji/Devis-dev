@@ -15,9 +15,16 @@ function friendly(message) {
   return message || "Une erreur est survenue.";
 }
 
+const COUNTRIES = [
+  "Côte d'Ivoire", "Sénégal", "Mali", "Burkina Faso", "Bénin", "Togo", "Niger", "Guinée", "Ghana", "Nigeria",
+  "Cameroun", "Gabon", "Congo", "RD Congo", "Maroc", "Algérie", "Tunisie", "Madagascar",
+  "France", "Belgique", "Canada", "Autre",
+];
+
 export default function AuthForm() {
   const [mode, setMode] = useState("login"); // "login" ou "signup"
   const [name, setName] = useState("");
+  const [country, setCountry] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accepted, setAccepted] = useState(false);
@@ -35,7 +42,7 @@ export default function AuthForm() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { name } },
+          options: { data: { name, country } },
         });
         if (error) throw error;
         // Si la confirmation par email est activée, il n'y a pas encore de session.
@@ -70,6 +77,15 @@ export default function AuthForm() {
           <label className="field">
             Ton prénom ou ta marque
             <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+          </label>
+        )}
+        {mode === "signup" && (
+          <label className="field">
+            Ton pays (facultatif)
+            <select value={country} onChange={(e) => setCountry(e.target.value)} autoComplete="country-name">
+              <option value="">Je préfère ne pas le dire</option>
+              {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
           </label>
         )}
         <label className="field">

@@ -23,7 +23,8 @@ export default function ConfidentialitePage() {
       <p>Quand tu crées un compte, nous gardons :</p>
       <ul>
         <li>ton adresse e-mail et ton mot de passe (le mot de passe est chiffré, nous ne le voyons pas) ;</li>
-        <li>ton prénom ou le nom de ta marque ;</li>
+        <li>ton prénom ou le nom de ta marque, et ton pays si tu choisis de le donner (facultatif) ;</li>
+        <li>la date de ton inscription et de ta dernière connexion, visibles seulement par l'administratrice du site, avec ton nom et ton e-mail ;</li>
         <li>tes projets et tes devis : descriptions, cahiers des charges, noms et contacts de tes clients, prix, paramètres et logo.</li>
       </ul>
 

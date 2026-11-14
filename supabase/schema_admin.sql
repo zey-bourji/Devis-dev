@@ -77,3 +77,22 @@ grant execute on function public.admin_unban(uuid) to authenticated;
 
 -- ÉTAPE À PART, après ce qui précède : te déclarer administratrice (remplace par l'email de ton compte Youquote).
 -- insert into public.admins (user_id) select id from auth.users where email = 'TON_EMAIL';
+
+-- Liste des inscrits pour l'espace admin : nom, email, pays (si la personne l'a donné), dates, nombre de devis.
+-- Le pays n'est connu que si la personne l'a choisi à l'inscription : on ne suit pas les adresses IP.
+create or replace function public.admin_users() returns json
+language plpgsql security definer set search_path = public as $$
+declare result json;
+begin
+  if not public.is_admin() then raise exception 'Accès refusé'; end if;
+  select coalesce(json_agg(t), '[]'::json) into result from (
+    select u.id, u.email,
+           nullif(u.raw_user_meta_data->>'name', '') as name,
+           nullif(u.raw_user_meta_data->>'country', '') as country,
+           u.created_at, u.last_sign_in_at,
+           (select count(*) from public.quotes q where q.user_id = u.id) as quotes
+    from auth.users u
+    order by u.created_at desc limit 500
+  ) t;
+  return result;
+end $$;
