@@ -41,6 +41,7 @@ export default function QuoteEditor() {
   const [paid, setPaid] = useState({});                   // paiements reçus : { numéroÉchéance: { date, proof } }
   const [dates, setDates] = useState(DEFAULT_DATES);      // début, livraison, report
   const [cancelReason, setCancelReason] = useState("");
+  const [chat, setChat] = useState([]);                 // la conversation avec l'assistant, gardée dans le devis
   const [dirty, setDirty] = useState(false);              // le suivi a changé : on enregistre tout seul
   const [client, setClient] = useState({ name: "", project: "" });
   const [number, setNumber] = useState("");
@@ -166,6 +167,7 @@ export default function QuoteEditor() {
         setPaid(d.paid || {});
         setDates({ ...DEFAULT_DATES, ...(d.dates || {}) });
         setCancelReason(d.cancelReason || "");
+        setChat(Array.isArray(d.chat) ? d.chat : []);
         setClient(d.client || { name: "", project: "" });
         setSpecs(d.specs || "");
         setQuoteRate(d.dailyRate ?? null);
@@ -199,7 +201,7 @@ export default function QuoteEditor() {
       status,
       total,
       updated_at: new Date().toISOString(),
-      data: { selected: [...selected], notes, customLines, discountPercent, discountAmount, overrides, schedule, agreedTotal, paid, dates, cancelReason, client, specs, dailyRate: rate },
+      data: { selected: [...selected], notes, customLines, discountPercent, discountAmount, overrides, schedule, agreedTotal, paid, dates, cancelReason, chat, client, specs, dailyRate: rate },
     };
     let error;
     if (quoteId) {
@@ -283,7 +285,7 @@ export default function QuoteEditor() {
     if (!dirty || !quoteId || !user) return;
     const timer = setTimeout(() => saveQuote(true), 900);
     return () => clearTimeout(timer);
-  }, [dirty, paid, agreedTotal, dates, cancelReason, status]);
+  }, [dirty, paid, agreedTotal, dates, cancelReason, status, chat]);
 
   // --- L'assistant : applique les actions demandées par le chat, une par une ---
   // On garde la fonction à jour dans une "ref" : les actions arrivent avec des pauses,
@@ -339,7 +341,8 @@ export default function QuoteEditor() {
   const budgetRef = useRef({});
   budgetRef.current = { selected, rate, options: { customLines, discountPercent, discountAmount, notes, overrides } };
   const checkBudget = (budget) => planBudget({ ...budgetRef.current, budget });
-  const askAi = (message, history) => askAssistant({ message, history, context: aiContext, user });
+  const onChat = (messages) => { setChat(messages); if (quoteId) mark(); };
+  const askAi = (message, history, attachments) => askAssistant({ message, history, context: aiContext, user, attachments });
 
   const text = shareText({ dev, client, quote: finalQuote, number });
   const whatsappHref = whatsappUrl(text);
@@ -385,7 +388,7 @@ export default function QuoteEditor() {
       <div className="editor-main">
         <h1 className="page-title">Nouveau devis</h1>
 
-        <AiChat user={user} ready={ready} hasSpecs={!!specs.trim()} onAsk={askAi} onPlay={playOps} onBudget={checkBudget} />
+        <AiChat user={user} ready={ready} hasSpecs={!!specs.trim()} chatKey={quoteId || "new"} initial={chat} onChange={onChat} onAsk={askAi} onPlay={playOps} onBudget={checkBudget} />
 
         <section className="card">
           <h2>Toi</h2>

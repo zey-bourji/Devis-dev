@@ -230,3 +230,11 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
 
 .ai-form { align-items: flex-end; }
 .ai-form textarea { flex: 1; min-width: 0; resize: none; overflow-y: auto; line-height: 1.4; min-height: 46px; max-height: 200px; font: inherit; font-size: 16px; padding: 11px 14px; }
+
+.ai-files { display: block; margin-top: 6px; opacity: 0.8; font-size: 13px; }
+.ai-pending { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; padding: 0; }
+.ai-pending li { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); border-radius: 999px; padding: 5px 6px 5px 12px; font-size: 13px; max-width: 100%; }
+.ai-pending li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.ai-pending button { border: 0; background: #fff; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; line-height: 1; }
+.ai-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.ai-foot .muted { margin: 0; }

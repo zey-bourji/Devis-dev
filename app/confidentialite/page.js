@@ -43,6 +43,12 @@ export default function ConfidentialitePage() {
         l'amélioration de ses modèles.
       </p>
       <p>
+        Tu peux joindre des documents (PDF, Word, texte) et des photos : le texte des documents et les photos
+        réduites partent chez le même fournisseur, uniquement quand tu envoies le message. Ils ne sont pas
+        conservés chez nous. Seuls les noms des fichiers restent dans l'historique de la conversation, qui est
+        enregistré avec ton devis (60 messages au maximum) et que tu peux effacer avec « Nouvelle conversation ».
+      </p>
+      <p>
         L'assistant ne répond qu'aux sujets de devis. Pour éviter les abus, les demandes refusées (hors sujet,
         inappropriées ou dangereuses) sont enregistrées avec un extrait du message, et l'accès peut être
         suspendu en cas d'abus répété.

@@ -2,16 +2,22 @@
 
 import { useEffect, useRef, useState } from "react";
 import { describeOp } from "../lib/aiOps";
+import { LIMITS, readAttachment } from "../lib/attachments";
 
 // La fenêtre de chat de l'assistant. Elle ne connaît pas le devis :
 // elle envoie le message (onAsk), puis rejoue les actions une par une (onPlay) pour que le devis se remplisse sous les yeux.
-export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay, onBudget }) {
+export default function AiChat({ user, ready, hasSpecs, chatKey, initial, onChange, onAsk, onPlay, onBudget }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [playing, setPlaying] = useState(false);
   const box = useRef(null);
   const area = useRef(null);
+  const picker = useRef(null);
+  const acted = useRef(false);               // vrai dès que la personne a écrit : on ne sauvegarde pas avant
+  const [pending, setPending] = useState([]); // les pièces jointes prêtes pour le prochain message
+  const [attachError, setAttachError] = useState("");
+  const [reading, setReading] = useState(false);
 
   // Le champ grandit avec le texte : on voit tout ce qu'on écrit avant d'envoyer.
   useEffect(() => {
@@ -21,37 +27,86 @@ export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay, onBudget 
     el.style.height = Math.min(el.scrollHeight, 200) + "px";
   }, [input]);
 
-  // Le message de bienvenue dépend de la connexion.
+  // Le message de bienvenue dépend de la connexion ; si le devis a déjà une conversation, on la remet dessous.
   useEffect(() => {
     if (!ready) return;
+    acted.current = false;
+    setPending([]);
     setMessages([
       {
         role: "assistant",
         welcome: true,
         text: user
-          ? "Salut ! Décris-moi le projet (ou colle le cahier des charges) et je remplis le devis pour toi. Tu peux aussi me demander de changer un prix, une remise ou le paiement en plusieurs fois."
+          ? "Salut ! Décris-moi le projet (ou colle le cahier des charges) et je remplis le devis pour toi. Tu peux aussi joindre un cahier des charges (PDF, Word) ou des photos."
           : "Salut ! Je suis en mode essai : je repère des mots-clés (« paiement Wave », « 10 % de remise », « en 3 fois »). Connecte-toi pour débloquer l'assistant IA complet.",
         steps: [],
       },
+      ...(Array.isArray(initial) ? initial : []),
     ]);
-  }, [ready, !!user]);
+  }, [ready, !!user, chatKey]);
+
+  // Sauvegarde de la conversation chez le parent (sans les fichiers, seulement leurs noms).
+  function persist(next) {
+    if (!acted.current || !onChange) return;
+    onChange(next.filter((m) => !m.welcome).slice(-LIMITS.messages));
+  }
+  useEffect(() => { persist(messages); }, [messages]);
 
   // Fait défiler la conversation vers le bas.
   useEffect(() => {
     if (box.current) box.current.scrollTop = box.current.scrollHeight;
   }, [messages, thinking]);
 
-  const busy = thinking || playing;
+  const busy = thinking || playing || reading;
+  const chatMessages = messages.filter((m) => !m.welcome);
+  const full = chatMessages.length >= LIMITS.messages;
+  const sentFiles = chatMessages.flatMap((m) => m.files || []);
+  const count = (list, kind) => list.filter((a) => a.kind === kind).length;
+  const filesNow = count(sentFiles, "file") + count(pending, "file");
+  const photosNow = count(sentFiles, "photo") + count(pending, "photo");
+
+  async function pick(e) {
+    const chosen = [...e.target.files];
+    e.target.value = "";
+    setAttachError("");
+    setReading(true);
+    let list = [...pending];
+    for (const f of chosen) {
+      try {
+        list = [...list, await readAttachment(f, [...sentFiles, ...list])];
+      } catch (err) {
+        setAttachError(err.message || "Fichier illisible.");
+      }
+    }
+    setPending(list);
+    setReading(false);
+  }
+
+  function newChat() {
+    if (busy) return;
+    acted.current = true;
+    setPending([]);
+    setAttachError("");
+    setMessages((m) => m.filter((x) => x.welcome));
+  }
 
   async function send(raw) {
-    const text = (raw ?? input).trim();
-    if (!text || busy) return;
+    const typed = (raw ?? input).trim();
+    const att = pending;
+    if ((!typed && att.length === 0) || busy || full) return;
+    const text = typed || "Analyse ce document et prépare le devis.";
+    acted.current = true;
     setInput("");
-    const history = messages.filter((m) => !m.welcome).map((m) => ({ role: m.role, content: m.text }));
-    setMessages((m) => [...m, { role: "user", text }]);
+    setPending([]);
+    setAttachError("");
+    const history = chatMessages.map((m) => ({ role: m.role, content: m.text }));
+    setMessages((m) => [...m, { role: "user", text, files: att.map((a) => ({ kind: a.kind, name: a.name })) }]);
     setThinking(true);
 
-    const res = await onAsk(text, history);
+    const res = await onAsk(text, history, {
+      texts: att.filter((a) => a.kind === "file").map((a) => ({ name: a.name, text: a.text })),
+      images: att.filter((a) => a.kind === "photo").map((a) => a.dataUrl),
+    });
     setThinking(false);
 
     let index;
@@ -118,6 +173,7 @@ export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay, onBudget 
         {messages.map((m, i) => (
           <div key={i} className={"ai-msg " + m.role}>
             <p>{m.text}</p>
+            {m.files?.length > 0 && <small className="ai-files">Joint : {m.files.map((f) => f.name).join(", ")}</small>}
             {m.steps?.length > 0 && (
               <ul className="ai-steps">
                 {m.steps.map((s, j) => (
@@ -154,6 +210,19 @@ export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay, onBudget 
         ))}
       </div>
 
+      {user && pending.length > 0 && (
+        <ul className="ai-pending">
+          {pending.map((a, i) => (
+            <li key={i}>
+              <span>{a.name}</span>
+              <button type="button" aria-label={"Retirer " + a.name} onClick={() => setPending((p) => p.filter((_, k) => k !== i))}>×</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {attachError && <p className="error">{attachError}</p>}
+      {full && <p className="muted">Cette conversation est pleine. Lance une nouvelle conversation pour continuer.</p>}
+
       <form
         className="ai-form"
         onSubmit={(e) => {
@@ -173,11 +242,27 @@ export default function AiChat({ user, ready, hasSpecs, onAsk, onPlay, onBudget 
             }
           }}
           placeholder="Ex : site pour un salon de coiffure, avec réservation..."
-          disabled={busy}
+          disabled={busy || full}
           aria-label="Ton message à l'assistant"
         />
-        <button className="btn" disabled={busy || !input.trim()}>Envoyer</button>
+        {user && (
+          <>
+            <input ref={picker} type="file" hidden multiple accept="image/jpeg,image/png,image/webp,.pdf,.docx,.txt,.md,.csv" onChange={pick} />
+            <button type="button" className="btn btn-outline" disabled={busy || full} onClick={() => picker.current?.click()}>Joindre</button>
+          </>
+        )}
+        <button className="btn" disabled={busy || full || (!input.trim() && pending.length === 0)}>Envoyer</button>
       </form>
+      {user && (
+        <div className="ai-foot">
+          <small className="muted">
+            Joint dans cette conversation : documents {filesNow}/{LIMITS.files}, photos {photosNow}/{LIMITS.photos}
+          </small>
+          {chatMessages.length > 0 && (
+            <button type="button" className="link-btn" onClick={newChat} disabled={busy}>Nouvelle conversation</button>
+          )}
+        </div>
+      )}
     </section>
   );
 }
