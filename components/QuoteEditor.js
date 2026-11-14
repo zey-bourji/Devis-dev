@@ -227,7 +227,6 @@ export default function QuoteEditor() {
   const setNote = (id, text) => setNotes({ ...notes, [id]: text });
 
   // Changer les jours recalcule le prix tout seul (on efface un éventuel prix saisi à la main).
-  const setDays = (id, days) => setOverrides({ ...overrides, [id]: { days: Math.max(0, days) } });
   // Saisir un prix à la main le fige, jusqu'à ce qu'on clique sur "Rétablir".
   const setPrice = (id, price) => setOverrides({ ...overrides, [id]: { ...(overrides[id] || {}), price: Math.max(0, price) } });
   const resetLine = (id) => {
@@ -294,9 +293,7 @@ export default function QuoteEditor() {
     switch (op.op) {
       case "select": setSelected((s) => new Set(s).add(op.id)); break;
       case "unselect": setSelected((s) => { const n = new Set(s); n.delete(op.id); return n; }); break;
-      case "days": setOverrides((o) => ({ ...o, [op.id]: { days: op.value } })); break;
       case "price": setOverrides((o) => ({ ...o, [op.id]: { ...(o[op.id] || {}), price: op.value } })); break;
-      case "rate": changeRate(op.value); break;
       case "discount_percent": setDiscountPercent(op.value); break;
       case "discount_amount": setDiscountAmount(op.value); break;
       case "round": roundTotal(op.step); break;
@@ -325,12 +322,11 @@ export default function QuoteEditor() {
   // Ce que l'IA voit du devis : le catalogue et l'état actuel (jamais les infos personnelles du dev).
   const aiContext = {
     catalogue: CATEGORIES.flatMap((c) =>
-      c.items.map((i) => ({ id: i.id, label: i.label, category: c.label, type: i.type, days: i.days, min: i.min, max: i.max, price: i.price }))
+      c.items.map((i) => ({ id: i.id, label: i.label, category: c.label, min: i.min, max: i.max, price: i.price }))
     ),
     state: {
       selected: [...selected],
-      lines: quote.lines.map((l) => ({ id: l.id, days: l.days, price: l.price })),
-      dailyRate: rate,
+      lines: quote.lines.map((l) => ({ id: l.id, price: l.price })),
       discountPercent,
       discountAmount,
       schedule,
@@ -369,7 +365,6 @@ export default function QuoteEditor() {
           payments={payments}
           dateText={formatDate(now)}
           validUntilText={formatDate(addDays(now, validity))}
-          hideDays={!!client.hideDays}
           deliveryText={deliveryText(client)}
         />
       ).toBlob();
@@ -406,16 +401,6 @@ export default function QuoteEditor() {
             <label className="field">
               Téléphone
               <input value={dev.phone} onChange={(e) => setDev({ ...dev, phone: e.target.value })} />
-            </label>
-            <label className="field">
-              Taux journalier (FCFA)
-              <input
-                type="number"
-                min="0"
-                step="1000"
-                value={rate}
-                onChange={(e) => changeRate(Number(e.target.value) || 0)}
-              />
             </label>
           </div>
         </section>
@@ -485,10 +470,7 @@ export default function QuoteEditor() {
               Livraison estimée : au plus tard le
               <input type="date" value={client.deliveryTo || ""} onChange={(e) => setClient({ ...client, deliveryTo: e.target.value })} />
             </label>
-            <label className="check-row">
-              <input type="checkbox" checked={!!client.hideDays} onChange={(e) => setClient({ ...client, hideDays: e.target.checked })} />
-              Ne pas montrer les jours au client (seulement les prix)
-            </label>
+
           </div>
         </section>
 
@@ -497,38 +479,19 @@ export default function QuoteEditor() {
             <h2>{cat.label}</h2>
             {cat.items.map((item) => {
               const line = quote.lines.find((l) => l.id === item.id); // existe seulement si la case est cochée
-              const min = item.type === "days" ? Math.round(item.min * rate) : null;
-              const max = item.type === "days" ? Math.round(item.max * rate) : null;
+              const min = item.min ?? null;
+              const max = item.max ?? null;
               const outOfRange = line && min !== null && (line.price < min || line.price > max);
               return (
                 <div className="item-wrap" key={item.id}>
                   <label className="item">
                     <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggle(item.id)} />
-                    <span className="item-label">
-                      {item.label}
-                      {item.type === "days" && <small> {item.days} j</small>}
-                    </span>
+                    <span className="item-label">{item.label}</span>
                     <span className="item-price">{formatFCFA(line ? line.price : itemPrice(item, rate))}</span>
                   </label>
                   {line && (
                     <div className="tune">
                       <div className="tune-fields">
-                        {item.type === "days" && (
-                          <div className="tune-field">
-                            <span>Jours</span>
-                            <div className="stepper">
-                              <button type="button" onClick={() => setDays(item.id, line.days - 0.5)} aria-label="Moins un demi-jour">−</button>
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.5"
-                                value={line.days}
-                                onChange={(e) => setDays(item.id, Number(e.target.value) || 0)}
-                              />
-                              <button type="button" onClick={() => setDays(item.id, line.days + 0.5)} aria-label="Plus un demi-jour">+</button>
-                            </div>
-                          </div>
-                        )}
                         <label className="tune-field">
                           <span>Prix (FCFA)</span>
                           <input

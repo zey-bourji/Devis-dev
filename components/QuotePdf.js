@@ -22,7 +22,6 @@ const s = StyleSheet.create({
   catRow: { padding: 5, paddingLeft: 7, fontFamily: "Helvetica-Bold" },
   row: { flexDirection: "row", padding: 7, borderBottomWidth: 0.5, borderBottomColor: "#dfe2ee" },
   colLabel: { flex: 1, paddingRight: 10 },
-  colDays: { width: 50, textAlign: "right" },
   colPrice: { width: 100, textAlign: "right" },
   note: { color: "#6b7085", fontSize: 8.5, marginTop: 2, lineHeight: 1.3 },
   totals: { marginTop: 12, alignSelf: "flex-end", width: 250 },
@@ -71,7 +70,7 @@ function look(template, color) {
   };
 }
 
-export default function QuotePdf({ dev, client, quote, number, dateText, validUntilText, brand, payments = [], hideDays = false, deliveryText = "" }) {
+export default function QuotePdf({ dev, client, quote, number, dateText, validUntilText, brand, payments = [], deliveryText = "" }) {
   const template = brand.template || "classique";
   const color = brand.color;
   const v = look(template, color);
@@ -130,7 +129,6 @@ export default function QuotePdf({ dev, client, quote, number, dateText, validUn
 
         <View style={[s.headRow, v.head]}>
           <Text style={s.colLabel}>Désignation</Text>
-          {hideDays ? null : <Text style={s.colDays}>Jours</Text>}
           <Text style={s.colPrice}>Montant</Text>
         </View>
         {groups.map((group) => (
@@ -142,7 +140,6 @@ export default function QuotePdf({ dev, client, quote, number, dateText, validUn
                   <Text>{line.label}</Text>
                   {line.note ? <Text style={s.note}>{line.note}</Text> : null}
                 </View>
-                {hideDays ? null : <Text style={s.colDays}>{line.days ?? "-"}</Text>}
                 <Text style={s.colPrice}>{formatFCFA(line.price)}</Text>
               </View>
             ))}
