@@ -15,7 +15,7 @@ Le développeur coche les fonctionnalités d'un projet, le prix se calcule en FC
 
 ## Tester (pour le jury)
 
-- Site en ligne : https://devis-dev.bourjizeinab17.workers.dev
+- Site en ligne : https://youquote.site
 - Compte de démonstration : `demo@youquote.site` / `demo-deleted-account15`
 - Il contient 3 projets d'exemple (clients fictifs) : un devis envoyé, un accepté, un en cours avec paiements reçus.
 - Sans compte, l'éditeur de devis, l'assistant Youk et le PDF fonctionnent aussi, les données restent dans le navigateur.
