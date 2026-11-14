@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
 import { useUser } from "../lib/useUser";
 import { formatFCFA } from "../lib/pricing";
 import { statusClass } from "../lib/tracking";
+import { readAttachment } from "../lib/attachments";
 
 export default function ProjectDetail() {
   const { user, ready } = useUser();
@@ -35,6 +36,35 @@ export default function ProjectDetail() {
       .order("updated_at", { ascending: false })
       .then(({ data }) => setQuotes(data || []));
   }, [user, id]);
+
+  const picker = useRef(null);
+  const [fileNote, setFileNote] = useState({ text: "", error: false });
+  const [reading, setReading] = useState(false);
+
+  // Insère un document (PDF, Word, texte) : son texte est ajouté au cahier des charges du projet.
+  async function insertFile(e) {
+    const files = [...e.target.files];
+    e.target.value = "";
+    if (!files.length) return;
+    setFileNote({ text: "", error: false });
+    setReading(true);
+    const notes = [];
+    let errorText = "";
+    let added = "";
+    for (const f of files) {
+      try {
+        const a = await readAttachment(f, []);
+        if (a.kind === "photo") { errorText = "Les photos se joignent dans le chat de Youk, depuis un devis. Ici, insère un PDF, un Word ou un texte."; continue; }
+        added += (added ? "\n\n" : "") + a.text;
+        notes.push(`« ${a.name} » inséré.` + (a.cut ? " Document long : seul le début est gardé." : ""));
+      } catch (err) {
+        errorText = err.message || "Fichier illisible.";
+      }
+    }
+    if (added) setProject((p) => ({ ...p, specs: ((p.specs || "").trim() ? p.specs.trim() + "\n\n" : "") + added }));
+    setFileNote({ text: errorText || notes.join(" ") + " Pense à enregistrer le projet.", error: !!errorText });
+    setReading(false);
+  }
 
   const set = (field) => (e) => setProject({ ...project, [field]: e.target.value });
 
@@ -107,6 +137,11 @@ export default function ProjectDetail() {
         <h2>Cahier des charges</h2>
         <p className="muted">Colle ici le cahier des charges du client. Dans l'éditeur de devis, un bouton le lira pour te suggérer les fonctionnalités à cocher.</p>
         <textarea rows="8" value={project.specs} onChange={set("specs")} />
+        <input ref={picker} type="file" hidden multiple accept="image/jpeg,image/png,image/webp,.pdf,.docx,.txt,.md,.csv" onChange={insertFile} />
+        <button type="button" className="btn btn-outline btn-small" onClick={() => picker.current?.click()} disabled={reading}>
+          {reading ? "Lecture..." : "Insérer un fichier"}
+        </button>
+        {fileNote.text && <p className={fileNote.error ? "error" : "muted"}>{fileNote.text}</p>}
       </section>
 
       <div className="actions">
